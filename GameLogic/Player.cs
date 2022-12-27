@@ -2,14 +2,15 @@
 
 namespace GameLogic;
 
-internal class Player
+public class Player
 {
-    public Player(int id, string name)
+    public Player(int id)
     {
         Id = id;
-        Name = name ?? throw new ArgumentNullException(nameof(name));
         Cards = new List<Card>();
     }
+
+    public bool Ready;
 
     public readonly int Id;
 

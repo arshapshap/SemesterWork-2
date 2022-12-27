@@ -7,12 +7,11 @@ using XProtocol.Serializator;
 
 namespace XProtocol.XPackets
 {
-    public class XPacketNewPlayer
+    public class XPacketAddCardToHand
     {
         [XField(1)]
-        public int Id;
-
+        public int CardType;
         [XField(2)]
-        public bool Ready;
+        public int CardColor;
     }
 }

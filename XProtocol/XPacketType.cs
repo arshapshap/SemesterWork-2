@@ -4,6 +4,10 @@
     {
         Unknown,
         Handshake,
-        NewPlayer
+        NewPlayer,
+        PlayerReady,
+        GameStart,
+        UpdateCardOnTable,
+        AddCardToHand,
     }
 }

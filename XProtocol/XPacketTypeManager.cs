@@ -12,6 +12,10 @@ namespace XProtocol
         {
             RegisterType(XPacketType.Handshake, 1, 0);
             RegisterType(XPacketType.NewPlayer, 1, 1);
+            RegisterType(XPacketType.PlayerReady, 1, 2);
+            RegisterType(XPacketType.GameStart, 1, 3);
+            RegisterType(XPacketType.UpdateCardOnTable, 2, 0);
+            RegisterType(XPacketType.AddCardToHand, 2, 1);
         }
 
         public static void RegisterType(XPacketType type, byte btype, byte bsubtype)

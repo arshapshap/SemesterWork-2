@@ -1,7 +1,10 @@
-﻿using System;
+﻿using GameLogic;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using XProtocol.Serializator;
+using XProtocol.XPackets;
 
 namespace TCPServer
 {
@@ -10,6 +13,7 @@ namespace TCPServer
         private readonly Socket _socket;
         internal readonly List<ConnectedClient> _clients;
 
+        public Game Game { get; private set; }
         private bool _listening;
         private bool _stopListening;
 
@@ -25,6 +29,8 @@ namespace TCPServer
             {
                 throw new Exception("Server is already listening incoming requests.");
             }
+
+            Console.WriteLine("[!] Server is listening incoming requests.");
 
             _socket.Bind(new IPEndPoint(IPAddress.Any, 4910));
             _socket.Listen(10);
@@ -64,6 +70,37 @@ namespace TCPServer
 
                 var c = new ConnectedClient(client, this);
                 _clients.Add(c);
+            }
+        }
+
+        internal void StartGameIfAllReady()
+        {
+            if (_clients.Count > 1 && _clients.All(c => c.Player.Ready))
+            {
+                Game = new Game(_clients.Select(c => c.Player).ToArray());
+                Game.Start();
+                Thread.Sleep(100);
+                _clients.ForEach(c =>
+                {
+                    var gameStart = new XPacketGameStart();
+                    var lastCard = new XPacketUpdateCardOnTable()
+                    {
+                        CardType = (int)Game.LastCard.Type,
+                        CardColor = (int)Game.LastCard.Color,
+                    };
+
+                    c.QueuePacketSend(XProtocol.XPacketType.GameStart, gameStart);
+                    c.QueuePacketSend(XProtocol.XPacketType.UpdateCardOnTable, lastCard);
+
+
+                    c.Player.Cards
+                        .Select(card => new XPacketAddCardToHand() { CardType = (int)card.Type, CardColor = (int)card.Color })
+                        .ToList()
+                        .ForEach(packet =>
+                        {
+                            c.QueuePacketSend(XProtocol.XPacketType.AddCardToHand, packet);
+                        });
+                });
             }
         }
     }

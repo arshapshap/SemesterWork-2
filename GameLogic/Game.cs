@@ -7,13 +7,14 @@ using System.Threading.Tasks;
 
 namespace GameLogic
 {
-    internal class Game
+    public class Game
     {
         private static Random rng = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
 
         public readonly Player[] Players;
         public readonly Stack<Card> Deck;
         public readonly Stack<Card> DiscardPile;
+
         public Card LastCard { get; private set; }
 
         public Game(Player[] players)

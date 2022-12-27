@@ -1,20 +1,24 @@
-﻿using System;
+﻿using GameLogic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using XProtocol;
 using XProtocol.Serializator;
+using XProtocol.XPackets;
 
 namespace TCPServer
 {
     internal class ConnectedClient
     {
         private XServer _server;
+
+        public Player Player { get; private set; }
         public Socket Client { get; }
 
-        public int Id { get; set; }
 
         private readonly Queue<byte[]> _packetSendingQueue = new Queue<byte[]>();
 
@@ -52,11 +56,15 @@ namespace TCPServer
         private void ProcessIncomingPacket(XPacket packet)
         {
             var type = XPacketTypeManager.GetTypeFromPacket(packet);
+            Console.WriteLine($"Recieved {type}Packet from {(IPEndPoint)Client.RemoteEndPoint}");
 
             switch (type)
             {
                 case XPacketType.Handshake:
                     ProcessHandshake(packet);
+                    break;
+                case XPacketType.PlayerReady:
+                    ProcessPlayerReady(packet);
                     break;
                 case XPacketType.Unknown:
                     break;
@@ -65,43 +73,64 @@ namespace TCPServer
             }
         }
 
+        private void ProcessPlayerReady(XPacket packet)
+        {
+            Player.Ready = true;
+
+            foreach (var client in _server._clients)
+            {
+                var playerReady = new XPacketPlayerReady()
+                {
+                    Id = Player.Id
+                };
+                client.QueuePacketSend(XPacketType.PlayerReady, playerReady);
+            }
+
+            _server.StartGameIfAllReady();
+        }
+
         private void ProcessHandshake(XPacket packet)
         {
-            Id = _server._clients.Count;
+            Player = new Player(_server._clients.Count);
 
             var handshake = new XPacketHandshake()
             {
-                Id = Id
+                Id = Player.Id,
+                AlreadyStarted = _server.Game != null
             };
 
-            QueuePacketSend(XPacketConverter
-                .Serialize(XPacketType.Handshake, handshake).ToPacket());
+            QueuePacketSend(XPacketType.Handshake, handshake);
 
 
-            if (Id <= 10)
+            if (Player.Id <= 10 && _server.Game == null)
             {
-
                 var newPlayer = new XPacketNewPlayer()
                 {
-                    Id = Id
+                    Id = Player.Id
                 };
                 foreach (var client in _server._clients)
                 {
-                    if (client.Id != Id)
-                        QueuePacketSend(XPacketConverter.Serialize(XPacketType.NewPlayer, new XPacketNewPlayer() { Id = client.Id }).ToPacket());
-                    client.QueuePacketSend(XPacketConverter.Serialize(XPacketType.NewPlayer, newPlayer).ToPacket());
+                    if (client.Player.Id != Player.Id)
+                        QueuePacketSend(XPacketType.NewPlayer, new XPacketNewPlayer() { 
+                            Id = client.Player.Id, 
+                            Ready = client.Player.Ready 
+                        });
+                    client.QueuePacketSend(XPacketType.NewPlayer, newPlayer);
                 }
             }
         }
 
-        public void QueuePacketSend(byte[] packet)
+        internal void QueuePacketSend(XPacketType packetType, object packet)
         {
-            if (packet.Length > 256)
+            var bytes = XPacketConverter.Serialize(packetType, packet).ToPacket();
+            Console.WriteLine($"Sent {packetType}Packet to {(IPEndPoint)Client.RemoteEndPoint}");
+
+            if (bytes.Length > 256)
             {
                 throw new Exception("Max packet size is 256 bytes.");
             }
 
-            _packetSendingQueue.Enqueue(packet);
+            _packetSendingQueue.Enqueue(bytes);
         }
 
         private void SendPackets()
