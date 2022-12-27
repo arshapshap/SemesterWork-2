@@ -11,13 +11,17 @@ namespace TCPServer
 {
     internal class ConnectedClient
     {
+        private XServer _server;
         public Socket Client { get; }
+
+        public int Id { get; set; }
 
         private readonly Queue<byte[]> _packetSendingQueue = new Queue<byte[]>();
 
-        public ConnectedClient(Socket client)
+        public ConnectedClient(Socket client, XServer server)
         {
             Client = client;
+            _server = server;
 
             Task.Run((Action) ProcessIncomingPackets);
             Task.Run((Action) SendPackets);
@@ -63,14 +67,31 @@ namespace TCPServer
 
         private void ProcessHandshake(XPacket packet)
         {
-            Console.WriteLine("Recieved handshake packet.");
+            Id = _server._clients.Count;
 
-            var handshake = XPacketConverter.Deserialize<XPacketHandshake>(packet);
-            handshake.MagicHandshakeNumber -= 15;
-            
-            Console.WriteLine("Answering..");
+            var handshake = new XPacketHandshake()
+            {
+                Id = Id
+            };
 
-            QueuePacketSend(XPacketConverter.Serialize(XPacketType.Handshake, handshake).ToPacket());
+            QueuePacketSend(XPacketConverter
+                .Serialize(XPacketType.Handshake, handshake).ToPacket());
+
+
+            if (Id <= 10)
+            {
+
+                var newPlayer = new XPacketNewPlayer()
+                {
+                    Id = Id
+                };
+                foreach (var client in _server._clients)
+                {
+                    if (client.Id != Id)
+                        QueuePacketSend(XPacketConverter.Serialize(XPacketType.NewPlayer, new XPacketNewPlayer() { Id = client.Id }).ToPacket());
+                    client.QueuePacketSend(XPacketConverter.Serialize(XPacketType.NewPlayer, newPlayer).ToPacket());
+                }
+            }
         }
 
         public void QueuePacketSend(byte[] packet)

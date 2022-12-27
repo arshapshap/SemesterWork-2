@@ -1,15 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2026
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TCPClient", "TCPClient\TCPClient.csproj", "{A76BFE5A-C711-4B27-BD8B-2AA917401E3C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TCPServer", "TCPServer\TCPServer.csproj", "{09C85E39-53EF-466A-AB8B-DF23EBF3065B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TCPServer", "TCPServer\TCPServer.csproj", "{09C85E39-53EF-466A-AB8B-DF23EBF3065B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XProtocol", "XProtocol\XProtocol.csproj", "{B510589E-929E-47FC-9908-01F631FFB574}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XProtocol", "XProtocol\XProtocol.csproj", "{B510589E-929E-47FC-9908-01F631FFB574}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameLogic", "GameLogic\GameLogic.csproj", "{C814A36D-506C-4D42-98B5-AEC4FDCD918F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{4DB9D61F-BE82-428D-8C4A-2282C3BD4C05}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client", "Client\Client.csproj", "{4D33DD0A-846B-428E-83AB-74112F142075}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A76BFE5A-C711-4B27-BD8B-2AA917401E3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A76BFE5A-C711-4B27-BD8B-2AA917401E3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A76BFE5A-C711-4B27-BD8B-2AA917401E3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A76BFE5A-C711-4B27-BD8B-2AA917401E3C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{09C85E39-53EF-466A-AB8B-DF23EBF3065B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{09C85E39-53EF-466A-AB8B-DF23EBF3065B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09C85E39-53EF-466A-AB8B-DF23EBF3065B}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -29,10 +25,14 @@ Global
 		{B510589E-929E-47FC-9908-01F631FFB574}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B510589E-929E-47FC-9908-01F631FFB574}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B510589E-929E-47FC-9908-01F631FFB574}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4DB9D61F-BE82-428D-8C4A-2282C3BD4C05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4DB9D61F-BE82-428D-8C4A-2282C3BD4C05}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4DB9D61F-BE82-428D-8C4A-2282C3BD4C05}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4DB9D61F-BE82-428D-8C4A-2282C3BD4C05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C814A36D-506C-4D42-98B5-AEC4FDCD918F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C814A36D-506C-4D42-98B5-AEC4FDCD918F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C814A36D-506C-4D42-98B5-AEC4FDCD918F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C814A36D-506C-4D42-98B5-AEC4FDCD918F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D33DD0A-846B-428E-83AB-74112F142075}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D33DD0A-846B-428E-83AB-74112F142075}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D33DD0A-846B-428E-83AB-74112F142075}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D33DD0A-846B-428E-83AB-74112F142075}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

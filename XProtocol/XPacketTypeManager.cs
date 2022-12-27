@@ -11,6 +11,7 @@ namespace XProtocol
         static XPacketTypeManager()
         {
             RegisterType(XPacketType.Handshake, 1, 0);
+            RegisterType(XPacketType.NewPlayer, 1, 1);
         }
 
         public static void RegisterType(XPacketType type, byte btype, byte bsubtype)

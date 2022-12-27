@@ -8,16 +8,13 @@ namespace TCPServer
     internal class XServer
     {
         private readonly Socket _socket;
-        private readonly List<ConnectedClient> _clients;
+        internal readonly List<ConnectedClient> _clients;
 
         private bool _listening;
         private bool _stopListening;
 
         public XServer()
         {
-            var ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());  
-            var ipAddress = ipHostInfo.AddressList[0];
-
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _clients = new List<ConnectedClient>();
         }
@@ -65,7 +62,7 @@ namespace TCPServer
 
                 Console.WriteLine($"[!] Accepted client from {(IPEndPoint) client.RemoteEndPoint}");
 
-                var c = new ConnectedClient(client);
+                var c = new ConnectedClient(client, this);
                 _clients.Add(c);
             }
         }

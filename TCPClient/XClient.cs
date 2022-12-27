@@ -3,20 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace TCPClient
 {
-    internal class XClient
+    public class XClient
     {
-        public Action<byte[]> OnPacketRecieve { get; set; }
+        public Action<byte[]> OnPacketReceive { get; set; }
 
         private readonly Queue<byte[]> _packetSendingQueue = new Queue<byte[]>();
 
         private Socket _socket;
         private IPEndPoint _serverEndPoint;
-
+        
         public void Connect(string ip, int port)
         {
             Connect(new IPEndPoint(IPAddress.Parse(ip), port));
@@ -25,9 +23,6 @@ namespace TCPClient
         public void Connect(IPEndPoint server)
         {
             _serverEndPoint = server;
-
-            var ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());  
-            var ipAddress = ipHostInfo.AddressList[0];
 
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _socket.Connect(_serverEndPoint);
@@ -59,11 +54,11 @@ namespace TCPClient
                     return buff[i + 1] != 0;
                 }).Concat(new byte[] {0xFF, 0}).ToArray();
 
-                OnPacketRecieve?.Invoke(buff);
+                OnPacketReceive?.Invoke(buff);
             }
         }
 
-        private void SendPackets()
+        private async void SendPackets()
         {
             while (true)
             {
