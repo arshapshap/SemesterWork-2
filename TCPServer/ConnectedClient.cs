@@ -17,15 +17,15 @@ namespace TCPServer
     {
         private XServer _server;
 
-        public Player Player { get; private set; }
-        public Socket Client { get; }
+        internal Player Player { get; private set; }
+        private Socket client { get; }
 
 
         private readonly Queue<byte[]> _packetSendingQueue = new Queue<byte[]>();
 
         public ConnectedClient(Socket client, XServer server)
         {
-            Client = client;
+            this.client = client;
             _server = server;
 
             Task.Run((Action) ProcessIncomingPackets);
@@ -37,7 +37,7 @@ namespace TCPServer
             while (true) // Слушаем пакеты, пока клиент не отключится.
             {
                 var buff = new byte[256]; // Максимальный размер пакета - 256 байт.
-                Client.Receive(buff);
+                client.Receive(buff);
 
                 buff = buff.TakeWhile((b, i) =>
                 {
@@ -57,7 +57,7 @@ namespace TCPServer
         private void ProcessIncomingPacket(XPacket packet)
         {
             var type = XPacketTypeManager.GetTypeFromPacket(packet);
-            Console.WriteLine($"Recieved {type}Packet from {(IPEndPoint)Client.RemoteEndPoint}");
+            Console.WriteLine($"Recieved {type}Packet from {(IPEndPoint)client.RemoteEndPoint}");
 
             switch (type)
             {
@@ -196,7 +196,7 @@ namespace TCPServer
         internal void QueuePacketSend(XPacketType packetType, object packet)
         {
             var bytes = XPacketConverter.Serialize(packetType, packet).ToPacket();
-            Console.WriteLine($"Sent {packetType}Packet to {(IPEndPoint)Client.RemoteEndPoint}");
+            Console.WriteLine($"Sent {packetType}Packet to {(IPEndPoint)client.RemoteEndPoint}");
 
             if (bytes.Length > 256)
             {
@@ -217,7 +217,7 @@ namespace TCPServer
                 }
 
                 var packet = _packetSendingQueue.Dequeue();
-                Client.Send(packet);
+                client.Send(packet);
 
                 Thread.Sleep(100);
             }
