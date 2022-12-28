@@ -45,6 +45,7 @@ namespace Client
             cardOnTablePicture.Image = Image.FromFile(imagesPath + @$"\{cardFileName}.png");
 
             ChangeSelectedColor(selectedColor);
+            HideSelectColorBox();
         }
 
         private void CheckMoveAvailable()
@@ -59,24 +60,24 @@ namespace Client
         private void ChangeSelectedColor(CardColor? selectedColor)
         {
             if (selectedColor == null)
-                this.selectedColorPicture.Visible = false;
+                selectedColorPicture.Visible = false;
             else
             {
-                this.selectedColorPicture.Visible = true;
-                this.selectedColorPicture.BringToFront();
+                selectedColorPicture.Visible = true;
+                selectedColorPicture.BringToFront();
                 switch (selectedColor)
                 {
                     case CardColor.Red:
-                        this.selectedColorPicture.BackColor = RedColor;
+                        selectedColorPicture.BackColor = RedColor;
                         break;
                     case CardColor.Yellow:
-                        this.selectedColorPicture.BackColor = YellowColor;
+                        selectedColorPicture.BackColor = YellowColor;
                         break;
                     case CardColor.Green:
-                        this.selectedColorPicture.BackColor = GreenColor;
+                        selectedColorPicture.BackColor = GreenColor;
                         break;
                     case CardColor.Blue:
-                        this.selectedColorPicture.BackColor = BlueColor;
+                        selectedColorPicture.BackColor = BlueColor;
                         break;
                 }
             }
@@ -204,12 +205,14 @@ namespace Client
 
         private void cardsListView_DoubleClick(object sender, EventArgs e)
         {
-            if (currentPlayerId == Player.Id && cardsListView.SelectedItems.Count >= 1)
+            if (cardsListView.SelectedItems.Count >= 1)
             {
                 ListViewItem item = cardsListView.SelectedItems[0];
                 var card = Card.FromString(item.ImageKey);
 
-                if (Game.CheckMoveCorrect(cardOnTable, card, selectedCardOnTableColor) && card.Color != CardColor.Black)
+                if ((currentPlayerId == Player.Id && Game.CheckMoveCorrect(cardOnTable, card, selectedCardOnTableColor)
+                    || Game.CheckMoveInterception(cardOnTable, card, selectedCardOnTableColor)) 
+                    && card.Color != CardColor.Black)
                     client.QueuePacketSend(XPacketType.UpdateCardOnTable, new XPacketUpdateCardOnTable()
                     {
                         CardType = (int)card.Type,
@@ -220,14 +223,16 @@ namespace Client
                     selectedCard = card;
 
                     mainGroupBox.Enabled = false;
-
-                    this.Controls.Add(selectColorBox);
-                    selectColorBox.BringToFront();
-
                     selectColorBox.Visible = true;
                     selectColorBox.Enabled = true;
+                    selectColorBox.BringToFront();
                 }
             }
+        }
+
+        private void main_Click(object sender, EventArgs e)
+        {
+            HideSelectColorBox();
         }
 
         private void deckPicture_Click(object sender, EventArgs e)
@@ -247,9 +252,7 @@ namespace Client
                 CardColor = (int)selectedCard.Color,
                 SelectedColor = (int)CardColor.Red
             });
-            selectColorBox.Visible = false;
-            selectColorBox.Enabled = false;
-            mainGroupBox.Enabled = true;
+            HideSelectColorBox();
         }
 
         private void yellowButton_Click(object sender, EventArgs e)
@@ -260,9 +263,7 @@ namespace Client
                 CardColor = (int)selectedCard.Color,
                 SelectedColor = (int)CardColor.Yellow
             });
-            selectColorBox.Visible = false;
-            selectColorBox.Enabled = false;
-            mainGroupBox.Enabled = true;
+            HideSelectColorBox();
         }
 
         private void greenButton_Click(object sender, EventArgs e)
@@ -273,9 +274,7 @@ namespace Client
                 CardColor = (int)selectedCard.Color,
                 SelectedColor = (int)CardColor.Green
             });
-            selectColorBox.Visible = false;
-            selectColorBox.Enabled = false;
-            mainGroupBox.Enabled = true;
+            HideSelectColorBox();
         }
 
         private void blueButton_Click(object sender, EventArgs e)
@@ -286,6 +285,23 @@ namespace Client
                 CardColor = (int)selectedCard.Color,
                 SelectedColor = (int)CardColor.Blue
             });
+            HideSelectColorBox();
+        }
+
+        internal void GameOver(int winnerId)
+        {
+            HideSelectColorBox();
+
+            winnerLabel.Text = $"Победитель: Player{winnerId}";
+            mainGroupBox.Enabled = false;
+            gameOverBox.Visible = true;
+            gameOverBox.Enabled = true;
+            gameOverBox.BringToFront();
+            winnerLabel.BringToFront();
+        }
+
+        private void HideSelectColorBox()
+        {
             selectColorBox.Visible = false;
             selectColorBox.Enabled = false;
             mainGroupBox.Enabled = true;

@@ -122,11 +122,23 @@ public class XClient
             case XPacketType.SkipMove:
                 ProcessSkipMove(packet);
                 break;
+            case XPacketType.GameOver:
+                ProcessGameOver(packet);
+                break;
             case XPacketType.Unknown:
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
+    }
+    private void ProcessGameOver(XPacket packet)
+    {
+        var gameOver = XPacketConverter.Deserialize<XPacketGameOver>(packet);
+        Form.BeginInvoke(new Action(() =>
+        {
+            Form.GameOver(gameOver.WinnerId);
+        }));
+
     }
 
     private void ProcessSkipMove(XPacket packet)

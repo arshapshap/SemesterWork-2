@@ -35,6 +35,8 @@
             this.greenButton = new System.Windows.Forms.Button();
             this.yellowButton = new System.Windows.Forms.Button();
             this.redButton = new System.Windows.Forms.Button();
+            this.gameOverBox = new System.Windows.Forms.GroupBox();
+            this.winnerLabel = new System.Windows.Forms.Label();
             this.playersList = new System.Windows.Forms.ListBox();
             this.readyButton = new System.Windows.Forms.Button();
             this.nameTextBox = new System.Windows.Forms.TextBox();
@@ -49,6 +51,7 @@
             this.cardsList = new System.Windows.Forms.ImageList(this.components);
             this.readyGroup = new System.Windows.Forms.GroupBox();
             this.selectColorBox.SuspendLayout();
+            this.gameOverBox.SuspendLayout();
             this.mainGroupBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.selectedColorPicture)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.deckPicture)).BeginInit();
@@ -111,6 +114,29 @@
             this.redButton.TabIndex = 0;
             this.redButton.UseVisualStyleBackColor = false;
             this.redButton.Click += new System.EventHandler(this.redButton_Click);
+            // 
+            // gameOverBox
+            // 
+            this.gameOverBox.BackColor = System.Drawing.Color.White;
+            this.gameOverBox.Controls.Add(this.winnerLabel);
+            this.gameOverBox.Location = new System.Drawing.Point(340, 279);
+            this.gameOverBox.Name = "gameOverBox";
+            this.gameOverBox.Size = new System.Drawing.Size(350, 125);
+            this.gameOverBox.TabIndex = 10;
+            this.gameOverBox.TabStop = false;
+            this.gameOverBox.Text = "Игра завершена!";
+            this.gameOverBox.Visible = false;
+            // 
+            // winnerLabel
+            // 
+            this.winnerLabel.AutoSize = true;
+            this.winnerLabel.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.winnerLabel.Location = new System.Drawing.Point(34, 49);
+            this.winnerLabel.Name = "winnerLabel";
+            this.winnerLabel.Size = new System.Drawing.Size(302, 41);
+            this.winnerLabel.TabIndex = 11;
+            this.winnerLabel.Text = "Победитель: Player0";
+            this.winnerLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // playersList
             // 
@@ -205,9 +231,9 @@
             // 
             this.deckPicture.Cursor = System.Windows.Forms.Cursors.No;
             this.deckPicture.Image = ((System.Drawing.Image)(resources.GetObject("deckPicture.Image")));
-            this.deckPicture.Location = new System.Drawing.Point(800, 115);
+            this.deckPicture.Location = new System.Drawing.Point(760, 161);
             this.deckPicture.Name = "deckPicture";
-            this.deckPicture.Size = new System.Drawing.Size(144, 216);
+            this.deckPicture.Size = new System.Drawing.Size(216, 144);
             this.deckPicture.TabIndex = 8;
             this.deckPicture.TabStop = false;
             this.deckPicture.Visible = false;
@@ -259,9 +285,14 @@
             this.ClientSize = new System.Drawing.Size(1006, 721);
             this.Controls.Add(this.mainGroupBox);
             this.Controls.Add(this.errorLabel);
+            this.Controls.Add(this.selectColorBox);
+            this.Controls.Add(this.gameOverBox);
             this.Name = "MainForm";
             this.Text = "Form1";
+            this.Click += new System.EventHandler(this.main_Click);
             this.selectColorBox.ResumeLayout(false);
+            this.gameOverBox.ResumeLayout(false);
+            this.gameOverBox.PerformLayout();
             this.mainGroupBox.ResumeLayout(false);
             this.mainGroupBox.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.selectedColorPicture)).EndInit();
@@ -293,10 +324,12 @@
         private PictureBox deckPicture;
         private Label yourMoveLabel;
         private GroupBox selectColorBox;
+        private GroupBox gameOverBox;
         private Button yellowButton;
         private Button redButton;
         private Button blueButton;
         private Button greenButton;
         private PictureBox selectedColorPicture;
+        private Label winnerLabel;
     }
 }
