@@ -1,8 +1,10 @@
 ﻿using GameLogic;
+using GameLogic.Cards;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using XProtocol;
 using XProtocol.Serializator;
 using XProtocol.XPackets;
 
@@ -79,36 +81,73 @@ namespace TCPServer
             {
                 Game = new Game(_clients.Select(c => c.Player).ToArray());
                 Game.Start();
-                _clients.ForEach(c =>
+                foreach (var client in _clients)
                 {
                     var gameStart = new XPacketGameStart()
                     {
-                        CardOnTableType = (int)Game.LastCard.Type,
-                        CardOnTableColor = (int)Game.LastCard.Color,
-                        Card1Type = (int)c.Player.Cards[0].Type,
-                        Card1Color = (int)c.Player.Cards[0].Color,
-                        Card2Type = (int)c.Player.Cards[1].Type,
-                        Card2Color = (int)c.Player.Cards[1].Color,
-                        Card3Type = (int)c.Player.Cards[2].Type,
-                        Card3Color = (int)c.Player.Cards[2].Color,
-                        Card4Type = (int)c.Player.Cards[3].Type,
-                        Card4Color = (int)c.Player.Cards[3].Color,
-                        Card5Type = (int)c.Player.Cards[4].Type,
-                        Card5Color = (int)c.Player.Cards[4].Color,
-                        Card6Type = (int)c.Player.Cards[5].Type,
-                        Card6Color = (int)c.Player.Cards[5].Color,
-                        Card7Type = (int)c.Player.Cards[6].Type,
-                        Card7Color = (int)c.Player.Cards[6].Color,
+                        CardOnTableType = (int)Game.CardOnTable.Type,
+                        CardOnTableColor = (int)Game.CardOnTable.Color,
+                        Card1Type = (int)client.Player.Cards[0].Type,
+                        Card1Color = (int)client.Player.Cards[0].Color,
+                        Card2Type = (int)client.Player.Cards[1].Type,
+                        Card2Color = (int)client.Player.Cards[1].Color,
+                        Card3Type = (int)client.Player.Cards[2].Type,
+                        Card3Color = (int)client.Player.Cards[2].Color,
+                        Card4Type = (int)client.Player.Cards[3].Type,
+                        Card4Color = (int)client.Player.Cards[3].Color,
+                        Card5Type = (int)client.Player.Cards[4].Type,
+                        Card5Color = (int)client.Player.Cards[4].Color,
+                        Card6Type = (int)client.Player.Cards[5].Type,
+                        Card6Color = (int)client.Player.Cards[5].Color,
+                        Card7Type = (int)client.Player.Cards[6].Type,
+                        Card7Color = (int)client.Player.Cards[6].Color,
                     };
                     var currentPlayer = new XPacketCurrentPlayer()
                     {
                         Id = Game.CurrentPlayerId
                     };
 
-                    c.QueuePacketSend(XProtocol.XPacketType.GameStart, gameStart);
-                    c.QueuePacketSend(XProtocol.XPacketType.CurrentPlayer, currentPlayer);
-                });
+                    client.QueuePacketSend(XPacketType.GameStart, gameStart);
+                    client.QueuePacketSend(XPacketType.CurrentPlayer, currentPlayer);
+                };
             }
+        }
+
+        internal void UpdateCardOnTable(XPacketSuccessfulMove successfulMove, Dictionary<int, Card[]> newCards)
+        {
+            foreach (var client in _clients)
+            {
+                client.QueuePacketSend(XPacketType.SuccessfulMove, successfulMove);
+
+                if (newCards.ContainsKey(client.Player.Id))
+                {
+                    foreach (var newCard in newCards[client.Player.Id])
+                    {
+                        var addCard = new XPacketAddCardToHand()
+                        {
+                            CardType = (int)newCard.Type,
+                            CardColor = (int)newCard.Color,
+                        };
+                        client.QueuePacketSend(XPacketType.AddCardToHand, addCard);
+                    }
+                }
+
+                foreach (var playerId in newCards.Keys)
+                {
+                    var changeCardsCount = new XPacketChangeCardsCount()
+                    {
+                        PlayerId = playerId,
+                        CardsCount = Game.GetPlayerCardsCount(playerId)
+                    };
+                    client.QueuePacketSend(XPacketType.ChangeCardsCount, changeCardsCount);
+                }
+            }
+        }
+
+        internal void SendToAllClients(XPacketType packetType, object packet)
+        {
+            foreach (var client in _clients)
+                client.QueuePacketSend(packetType, packet);
         }
     }
 }

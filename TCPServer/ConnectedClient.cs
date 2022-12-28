@@ -1,4 +1,5 @@
 ﻿using GameLogic;
+using GameLogic.Cards;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -66,6 +67,12 @@ namespace TCPServer
                 case XPacketType.PlayerReady:
                     ProcessPlayerReady(packet);
                     break;
+                case XPacketType.UpdateCardOnTable:
+                    ProcessUpdateCardOnTable(packet);
+                    break;
+                case XPacketType.AddCardToHand:
+                    ProcessAddCardToHand(packet);
+                    break;
                 case XPacketType.Unknown:
                     break;
                 default:
@@ -73,19 +80,65 @@ namespace TCPServer
             }
         }
 
+        private void ProcessAddCardToHand(XPacket packet)
+        {
+            if (_server.Game != null && _server.Game.TryTakeCardFromDeck(Player, out Card card)) 
+            {
+                var addCard = new XPacketAddCardToHand()
+                {
+                    CardType = (int)card.Type,
+                    CardColor = (int)card.Color,
+                };
+                QueuePacketSend(XPacketType.AddCardToHand, addCard);
+
+                var changeCardsCount = new XPacketChangeCardsCount()
+                {
+                    PlayerId = Player.Id,
+                    CardsCount = Player.Cards.Count
+                };
+
+                _server.SendToAllClients(XPacketType.ChangeCardsCount, changeCardsCount);
+
+                if (!_server.Game.CheckMoveCorrect(card))
+                {
+                    var skipMove = new XPacketSkipMove()
+                    {
+                        NextPlayerId = _server.Game.NextPlayer()
+                    };
+                    _server.SendToAllClients(XPacketType.SkipMove, skipMove);
+                }
+            }
+        }
+
+        private void ProcessUpdateCardOnTable(XPacket packet)
+        {
+            var cardPacket = XPacketConverter.Deserialize<XPacketUpdateCardOnTable>(packet);
+            var card = new Card((CardType)cardPacket.CardType, (CardColor)cardPacket.CardColor);
+            if (_server.Game != null && _server.Game.TryMove(Player, card, out Dictionary<int, Card[]> newCards, (CardColor)cardPacket.SelectedColor))
+            {
+                var successfulMove = new XPacketSuccessfulMove()
+                {
+                    PlayerId = Player.Id,
+                    CardType = cardPacket.CardType,
+                    CardColor = cardPacket.CardColor,
+                    NextPlayerId = _server.Game.CurrentPlayerId,
+                    SelectedColor = cardPacket.SelectedColor,
+                };
+
+                _server.UpdateCardOnTable(successfulMove, newCards);
+            }
+        }
+
         private void ProcessPlayerReady(XPacket packet)
         {
             Player.Ready = true;
 
-            foreach (var client in _server._clients)
+            var playerReady = new XPacketPlayerReady()
             {
-                var playerReady = new XPacketPlayerReady()
-                {
-                    Id = Player.Id
-                };
-                client.QueuePacketSend(XPacketType.PlayerReady, playerReady);
-            }
+                Id = Player.Id
+            };
 
+            _server.SendToAllClients(XPacketType.PlayerReady, playerReady);
             _server.StartGameIfAllReady();
         }
 

@@ -13,6 +13,17 @@ public class Player
     public void AddCard(Card card)
     {
         Cards.Add(card);
+        Sort();
+    }
+
+    public void TakeCard(Card card)
+    {
+        Cards.Remove(card);
+        Sort();
+    }
+
+    private void Sort()
+    {
         Cards = Cards.OrderBy(c => (int)c.Type).OrderBy(c => (int)c.Color).ToList();
     }
 

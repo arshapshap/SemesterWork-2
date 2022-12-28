@@ -22,6 +22,16 @@ namespace GameLogic.Cards
             CardType.Zero, CardType.One, CardType.Two, CardType.Three, CardType.Four, CardType.Five, CardType.Six, CardType.Seven, CardType.Eight, CardType.Nine, CardType.Skip, CardType.Reverse, CardType.PlusTwo
         };
 
+        public static Card FromString(string strCard)
+        {
+            if (!Enum.TryParse(strCard.Split('_')[0], out CardColor cardColor) || !int.TryParse(strCard.Split('_')[1], out int cardType) || cardType < 0 || cardType >= Enum.GetValues(typeof(CardType)).Length)
+                throw new Exception($"{strCard} is not valid card");
+            return new Card((CardType)cardType, cardColor);
+        }
+
+        public static string ToString(Card card)
+            => $"{card.Color}_{(int)card.Type}";
+
         public readonly CardColor Color;
         public readonly CardType Type;
 

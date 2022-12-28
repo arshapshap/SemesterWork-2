@@ -17,6 +17,9 @@ namespace XProtocol
             RegisterType(XPacketType.CurrentPlayer, 2, 0);
             RegisterType(XPacketType.UpdateCardOnTable, 2, 1);
             RegisterType(XPacketType.AddCardToHand, 2, 2);
+            RegisterType(XPacketType.ChangeCardsCount, 2, 3);
+            RegisterType(XPacketType.SuccessfulMove, 2, 4);
+            RegisterType(XPacketType.SkipMove, 2, 5);
         }
 
         public static void RegisterType(XPacketType type, byte btype, byte bsubtype)

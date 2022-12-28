@@ -7,13 +7,17 @@ using XProtocol.Serializator;
 
 namespace XProtocol.XPackets
 {
-    public class XPacketUpdateCardOnTable
+    public class XPacketSuccessfulMove
     {
         [XField(1)]
-        public int CardType;
+        public int PlayerId;
         [XField(2)]
-        public int CardColor;
+        public int CardType;
         [XField(3)]
+        public int CardColor;
+        [XField(4)]
         public int SelectedColor; // if CardColor is Black
+        [XField(5)]
+        public int NextPlayerId;
     }
 }

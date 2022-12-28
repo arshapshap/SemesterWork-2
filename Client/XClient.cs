@@ -18,7 +18,19 @@ public class XClient
     public MainForm Form { get; private set; }
     private Socket _socket;
     private IPEndPoint _serverEndPoint;
-    
+
+    internal static XClient ConnectClient(MainForm form)
+    {
+        var client = new XClient();
+        client.OnPacketReceive += client.OnPacketRecieve;
+        client.Form = form;
+        client.Connect("127.0.0.1", 4910);
+
+        client.QueuePacketSend(XPacketType.Handshake, new XPacketHandshake { Id = -1 });
+
+        return client;
+    }
+
     public void Connect(string ip, int port)
     {
         Connect(new IPEndPoint(IPAddress.Parse(ip), port));
@@ -35,14 +47,16 @@ public class XClient
         Task.Run((Action) SendPackets);
     }
 
-    public void QueuePacketSend(byte[] packet)
+    internal void QueuePacketSend(XPacketType packetType, object packet)
     {
-        if (packet.Length > 256)
+        var bytes = XPacketConverter.Serialize(packetType, packet).ToPacket();
+
+        if (bytes.Length > 256)
         {
             throw new Exception("Max packet size is 256 bytes.");
         }
 
-        _packetSendingQueue.Enqueue(packet);
+        _packetSendingQueue.Enqueue(bytes);
     }
 
     private void RecievePackets()
@@ -60,27 +74,6 @@ public class XClient
 
             OnPacketReceive?.Invoke(buff);
         }
-    }
-
-    internal static XClient ConnectClient(MainForm form)
-    {
-        var client = new XClient();
-        client.OnPacketReceive += client.OnPacketRecieve;
-        client.Form = form;
-        client.Connect("127.0.0.1", 4910);
-
-        Console.WriteLine("Sending handshake packet..");
-
-        client.QueuePacketSend(
-            XPacketConverter.Serialize(
-                XPacketType.Handshake,
-                new XPacketHandshake
-                {
-                    Id = -1
-                })
-                .ToPacket());
-
-        return client;
     }
 
     private void OnPacketRecieve(byte[] packet)
@@ -120,11 +113,54 @@ public class XClient
             case XPacketType.AddCardToHand:
                 ProcessAddCardToHand(packet);
                 break;
+            case XPacketType.ChangeCardsCount:
+                ProcessChangeCardsCount(packet);
+                break;
+            case XPacketType.SuccessfulMove:
+                ProcessSuccessfulMove(packet);
+                break;
+            case XPacketType.SkipMove:
+                ProcessSkipMove(packet);
+                break;
             case XPacketType.Unknown:
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
+    }
+
+    private void ProcessSkipMove(XPacket packet)
+    {
+        var move = XPacketConverter.Deserialize<XPacketSkipMove>(packet);
+        Form.BeginInvoke(new Action(() =>
+        {
+            Form.ChangeCurrentPlayer(move.NextPlayerId);
+        }));
+    }
+
+    private void ProcessChangeCardsCount(XPacket packet)
+    {
+        var cardsCount = XPacketConverter.Deserialize<XPacketChangeCardsCount>(packet);
+        Form.BeginInvoke(new Action(() =>
+        {
+            Form.PlayersCardsCount[cardsCount.PlayerId - 1] = cardsCount.CardsCount;
+            Form.UpdatePlayerInfo(cardsCount.PlayerId);
+        }));
+    }
+
+    private void ProcessSuccessfulMove(XPacket packet)
+    {
+        var move = XPacketConverter.Deserialize<XPacketSuccessfulMove>(packet);
+        var card = new Card((CardType)move.CardType, (CardColor)move.CardColor);
+        Form.BeginInvoke(new Action(() =>
+        {
+            Form.UpdateCardOnTable(card, (card.Color == CardColor.Black) ? (CardColor)move.SelectedColor : null);
+            if (move.PlayerId == Form.Player.Id)
+                Form.RemoveCardFromHand(card);
+            else
+                Form.DecreaseCardsNumber(move.PlayerId);
+            Form.ChangeCurrentPlayer(move.NextPlayerId);
+        }));
     }
 
     private void ProcessCurrentPlayer(XPacket packet)
@@ -144,7 +180,7 @@ public class XClient
 
         Form.BeginInvoke(new Action(() =>
         {
-            Form.AddCard(card);
+            Form.AddCardToHand(card);
         }));
     }
 

@@ -10,9 +10,16 @@ namespace Client
     public partial class MainForm : Form
     {
         string imagesPath = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName + @"\images";
+
         public Player Player { get; internal set; }
+        internal int[] PlayersCardsCount { get; private set; }
+
         XClient client;
+        Card cardOnTable;
+        CardColor? selectedCardOnTableColor;
         int currentPlayerId = -1;
+        Card selectedCard;
+        bool IsMoveAvailable = true;
 
         public MainForm()
         {
@@ -29,32 +36,105 @@ namespace Client
 
         }
 
-        internal void UpdateCardOnTable(Card card)
+        internal void UpdateCardOnTable(Card card, CardColor? selectedColor = null)
         {
-            var cardFileName = $"{card.Color}_{(int)card.Type}";
-            lastCardPicture.Image = Image.FromFile(imagesPath + @$"\{cardFileName}.png");
+            selectedCardOnTableColor = selectedColor;
+
+            cardOnTable = card;
+            var cardFileName = Card.ToString(card);
+            cardOnTablePicture.Image = Image.FromFile(imagesPath + @$"\{cardFileName}.png");
+
+            ChangeSelectedColor(selectedColor);
         }
 
-        internal void AddCard(Card card)
+        private void CheckMoveAvailable()
         {
-            var cardFileName = $"{card.Color}_{(int)card.Type}";
-            if (!cardsList.Images.ContainsKey(cardFileName))
-                cardsList.Images.Add(cardFileName, Image.FromFile(imagesPath + @$"\{cardFileName}.png"));
-            cardsListView.Items.Add("", cardFileName);
+            IsMoveAvailable = Player.Cards.Any(c => Game.CheckMoveCorrect(cardOnTable, c, selectedCardOnTableColor));
+            if (!IsMoveAvailable)
+                deckPicture.Cursor = Cursors.Hand;
+            else
+                deckPicture.Cursor = Cursors.No;
+        }
+
+        private void ChangeSelectedColor(CardColor? selectedColor)
+        {
+            if (selectedColor == null)
+                this.selectedColorPicture.Visible = false;
+            else
+            {
+                this.selectedColorPicture.Visible = true;
+                this.selectedColorPicture.BringToFront();
+                switch (selectedColor)
+                {
+                    case CardColor.Red:
+                        this.selectedColorPicture.BackColor = RedColor;
+                        break;
+                    case CardColor.Yellow:
+                        this.selectedColorPicture.BackColor = YellowColor;
+                        break;
+                    case CardColor.Green:
+                        this.selectedColorPicture.BackColor = GreenColor;
+                        break;
+                    case CardColor.Blue:
+                        this.selectedColorPicture.BackColor = BlueColor;
+                        break;
+                }
+            }
+            
+        }
+
+        internal void RemoveCardFromHand(Card card)
+        {
+            Player.TakeCard(card);
+            SortCardsInHand();
+            DecreaseCardsNumber(Player.Id);
+        }
+
+        internal void DecreaseCardsNumber(int playerId)
+        {
+            PlayersCardsCount[playerId - 1]--;
+            UpdatePlayerInfo(playerId);
+        }
+
+        internal void UpdatePlayerInfo(int playerId)
+        {
+            playersList.Items[playerId - 1] = $"{((currentPlayerId == playerId) ? ">>> " : "")}Player{playerId} [{PlayersCardsCount[playerId - 1]} карт]";
+        }
+
+        internal void AddCardToHand(Card card)
+        {
+            Player.AddCard(card);
+            SortCardsInHand();
+        }
+
+        internal void SortCardsInHand()
+        {
+            cardsListView.Clear();
+            foreach (var card in Player.Cards)
+            {
+                var cardFileName = Card.ToString(card);
+                if (!cardsList.Images.ContainsKey(cardFileName))
+                    cardsList.Images.Add(cardFileName, Image.FromFile(imagesPath + @$"\{cardFileName}.png"));
+                cardsListView.Items.Add(cardFileName, "", cardFileName);
+            }
         }
 
         internal void GameStart(Card lastCard, Card[] cards)
         {
             readyGroup.Dispose();
             cardsListView.Visible = true;
-            lastCardPicture.Visible = true;
+            cardOnTablePicture.Visible = true;
             deckPicture.Visible = true;
 
+            PlayersCardsCount = new int[playersList.Items.Count];
             for (int id = 1; id <= playersList.Items.Count; id++)
-                playersList.Items[id - 1] = $"Player{id} [7 карт]";
+            {
+                PlayersCardsCount[id - 1] = 7;
+                UpdatePlayerInfo(id);
+            }    
 
             foreach (var card in cards)
-                AddCard(card);
+                AddCardToHand(card);
             UpdateCardOnTable(lastCard);
         }
 
@@ -78,9 +158,8 @@ namespace Client
             else
             {
                 Player = new Player(id);
-
                 Text = $"Player{Player.Id}";
-                startScreen.Visible = true;
+                mainGroupBox.Visible = true;
                 nameTextBox.Text = $"Player{Player.Id}";
             }
         }
@@ -92,21 +171,22 @@ namespace Client
 
         internal void ChangeCurrentPlayer(int id)
         {
-            if (currentPlayerId != -1)
-                playersList.Items[id - 1] = playersList.Items[id].ToString().Replace(">>> ", "");
-
+            var previousPlayer = currentPlayerId;
             currentPlayerId = id;
-            playersList.Items[id - 1] = ">>> " + playersList.Items[id - 1];
+
+            if (previousPlayer != -1)
+                UpdatePlayerInfo(previousPlayer);
+            UpdatePlayerInfo(id);
             yourMoveLabel.Visible = id == Player.Id;
+
+            if (currentPlayerId == Player.Id)
+                CheckMoveAvailable();
         }
 
         private void readyButton_Click(object sender, EventArgs e)
         {
-            client.QueuePacketSend(
-                XPacketConverter.Serialize(
-                    XPacketType.PlayerReady,
-                    new XPacketPlayerReady())
-                    .ToPacket());
+            client.QueuePacketSend(XPacketType.PlayerReady,
+                    new XPacketPlayerReady());
             readyButton.Enabled = false;
         }
 
@@ -120,6 +200,95 @@ namespace Client
         {
             //saveNameButton.Enabled = false;
             //saveNameButton.Visible = false;
+        }
+
+        private void cardsListView_DoubleClick(object sender, EventArgs e)
+        {
+            if (currentPlayerId == Player.Id && cardsListView.SelectedItems.Count >= 1)
+            {
+                ListViewItem item = cardsListView.SelectedItems[0];
+                var card = Card.FromString(item.ImageKey);
+
+                if (Game.CheckMoveCorrect(cardOnTable, card, selectedCardOnTableColor) && card.Color != CardColor.Black)
+                    client.QueuePacketSend(XPacketType.UpdateCardOnTable, new XPacketUpdateCardOnTable()
+                    {
+                        CardType = (int)card.Type,
+                        CardColor = (int)card.Color
+                    });
+                else if (card.Color == CardColor.Black)
+                {
+                    selectedCard = card;
+
+                    mainGroupBox.Enabled = false;
+
+                    this.Controls.Add(selectColorBox);
+                    selectColorBox.BringToFront();
+
+                    selectColorBox.Visible = true;
+                    selectColorBox.Enabled = true;
+                }
+            }
+        }
+
+        private void deckPicture_Click(object sender, EventArgs e)
+        {
+            if (currentPlayerId == Player.Id && !IsMoveAvailable)
+            {
+                deckPicture.Cursor = Cursors.No;
+                client.QueuePacketSend(XPacketType.AddCardToHand, new XPacketAddCardToHand());
+            }
+        }
+
+        private void redButton_Click(object sender, EventArgs e)
+        {
+            client.QueuePacketSend(XPacketType.UpdateCardOnTable, new XPacketUpdateCardOnTable()
+            {
+                CardType = (int)selectedCard.Type,
+                CardColor = (int)selectedCard.Color,
+                SelectedColor = (int)CardColor.Red
+            });
+            selectColorBox.Visible = false;
+            selectColorBox.Enabled = false;
+            mainGroupBox.Enabled = true;
+        }
+
+        private void yellowButton_Click(object sender, EventArgs e)
+        {
+            client.QueuePacketSend(XPacketType.UpdateCardOnTable, new XPacketUpdateCardOnTable()
+            {
+                CardType = (int)selectedCard.Type,
+                CardColor = (int)selectedCard.Color,
+                SelectedColor = (int)CardColor.Yellow
+            });
+            selectColorBox.Visible = false;
+            selectColorBox.Enabled = false;
+            mainGroupBox.Enabled = true;
+        }
+
+        private void greenButton_Click(object sender, EventArgs e)
+        {
+            client.QueuePacketSend(XPacketType.UpdateCardOnTable, new XPacketUpdateCardOnTable()
+            {
+                CardType = (int)selectedCard.Type,
+                CardColor = (int)selectedCard.Color,
+                SelectedColor = (int)CardColor.Green
+            });
+            selectColorBox.Visible = false;
+            selectColorBox.Enabled = false;
+            mainGroupBox.Enabled = true;
+        }
+
+        private void blueButton_Click(object sender, EventArgs e)
+        {
+            client.QueuePacketSend(XPacketType.UpdateCardOnTable, new XPacketUpdateCardOnTable()
+            {
+                CardType = (int)selectedCard.Type,
+                CardColor = (int)selectedCard.Color,
+                SelectedColor = (int)CardColor.Blue
+            });
+            selectColorBox.Visible = false;
+            selectColorBox.Enabled = false;
+            mainGroupBox.Enabled = true;
         }
     }
 }

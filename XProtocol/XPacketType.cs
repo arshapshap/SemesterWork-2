@@ -7,8 +7,11 @@
         NewPlayer,
         PlayerReady,
         GameStart,
+        CurrentPlayer,
         UpdateCardOnTable,
         AddCardToHand,
-        CurrentPlayer,
+        SuccessfulMove,
+        ChangeCardsCount,
+        SkipMove
     }
 }

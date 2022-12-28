@@ -13,12 +13,14 @@ namespace GameLogic
         private static Random rng = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
 
         public readonly Player[] Players;
-        public readonly Stack<Card> Deck;
-        public readonly Stack<Card> DiscardPile;
+        public readonly Queue<Card> Deck;
+        public readonly Queue<Card> DiscardPile;
 
         public int CurrentPlayerId { get; private set; }
 
-        public Card LastCard { get; private set; }
+        public Card CardOnTable { get; private set; }
+        public CardColor? SelectedColor { get; private set; }
+        public bool Reversed { get; private set; }
 
         public Game(Player[] players)
         {
@@ -28,28 +30,89 @@ namespace GameLogic
                 throw new Exception("There must be not more than ten players in the game");
             Players = players;
             Deck = FillDeck();
-            DiscardPile = new Stack<Card>();
+            DiscardPile = new Queue<Card>();
         }
 
         public void Start()
         {
             DealCards();
 
-            var lastCard = PopFromDeck();
-            while (!Card.OrdinalCardTypes.Contains(lastCard.Type))
+            var cardOnTable = PopFromDeck();
+            while (!Card.OrdinalCardTypes.Contains(cardOnTable.Type))
             {
-                Deck.Push(lastCard);
-                lastCard = PopFromDeck();
+                Deck.Enqueue(cardOnTable);
+                cardOnTable = PopFromDeck();
             }
 
-            LastCard = lastCard;
-
+            CardOnTable = cardOnTable;
             CurrentPlayerId = Players[rng.Next(Players.Length)].Id;
         }
 
-        public void Move(Player player, Card card)
+        public bool TryMove(Player player, Card card, out Dictionary<int, Card[]> newCards, CardColor? selectedColor = null)
         {
+            newCards = new Dictionary<int, Card[]>();
+            if (!CheckMoveCorrect(card))
+                return false;
 
+            player.TakeCard(card);
+            CardOnTable = card;
+            CurrentPlayerId = NextPlayer();
+            SelectedColor = selectedColor;
+
+            if (card.Type == CardType.Skip)
+                CurrentPlayerId = NextPlayer();
+            else if (card.Type == CardType.Reverse)
+                Reversed = !Reversed;
+            else if (card.Type == CardType.PlusTwo)
+            {
+                newCards[CurrentPlayerId] = AddCards(CurrentPlayerId, 2);
+                CurrentPlayerId = NextPlayer();
+            }
+            else if (card.Type == CardType.PlusFour)
+            {
+                newCards[CurrentPlayerId] = AddCards(CurrentPlayerId, 4);
+                CurrentPlayerId = NextPlayer();
+            }
+
+            return true;
+        }
+
+        public bool TryTakeCardFromDeck(Player player, out Card card)
+        {
+            card = new Card();
+            if (player.Id != CurrentPlayerId || player.Cards.Any(c => CheckMoveCorrect(CardOnTable, c, SelectedColor)))
+                return false;
+
+            card = PopFromDeck();
+            player.AddCard(card);
+
+            return true;
+        }
+
+        public static bool CheckMoveCorrect(Card cardOnTable, Card card, CardColor? selectedColor = null)
+            => card.Color == CardColor.Black
+                || card.Color == cardOnTable.Color
+                || (cardOnTable.Color == CardColor.Black && card.Color == selectedColor)
+                || card.Type == cardOnTable.Type;
+
+        public int NextPlayer() 
+            => Reversed ?
+                ((CurrentPlayerId + Players.Length - 2) % Players.Length) + 1
+                : (CurrentPlayerId % Players.Length) + 1;
+
+        public bool CheckMoveCorrect(Card card)
+            => CheckMoveCorrect(CardOnTable, card, SelectedColor);
+
+        private Card[] AddCards(int playerId, int count)
+        {
+            var newCardsList = new List<Card>();
+            for (int i = 0; i < count; i++)
+            {
+                var newCard = PopFromDeck();
+                newCardsList.Add(newCard);
+                Players[playerId - 1].Cards.Add(newCard);
+            }
+            return newCardsList.ToArray();
         }
 
         private void DealCards()
@@ -65,7 +128,7 @@ namespace GameLogic
         {
             var shuffledCards = Shuffle(DiscardPile);
             foreach (var card in shuffledCards)
-                Deck.Push(card);
+                Deck.Enqueue(card);
             DiscardPile.Clear();
         }
 
@@ -84,24 +147,24 @@ namespace GameLogic
             return result;
         }
 
-        private static Stack<Card> FillDeck()
+        private static Queue<Card> FillDeck()
         {
-            var cards = new Stack<Card>();
+            var cards = new Queue<Card>();
             foreach (var color in Card.OrdinalCardColors)
                 foreach (var type in Card.ColoredCardTypes)
                 {
-                    cards.Push(new Card(type, color));
+                    cards.Enqueue(new Card(type, color));
                     if (type != CardType.Zero)
-                        cards.Push(new Card(type, color));
+                        cards.Enqueue(new Card(type, color));
                 }
 
             for (var i = 0; i < 4; i++)
             {
-                cards.Push(new Card(CardType.None));
-                cards.Push(new Card(CardType.PlusFour));
+                cards.Enqueue(new Card(CardType.None));
+                cards.Enqueue(new Card(CardType.PlusFour));
             }
 
-            return new Stack<Card>(Shuffle(cards));
+            return new Queue<Card>(Shuffle(cards));
         }
 
         private Card PopFromDeck()
@@ -109,7 +172,9 @@ namespace GameLogic
             if (Deck.Count == 0)
                 FillDeckFromDiscardPile();
 
-            return Deck.Pop();
+            return Deck.Dequeue();
         }
+
+        public int GetPlayerCardsCount(int playerId) => Players[playerId - 1].Cards.Count;
     }
 }

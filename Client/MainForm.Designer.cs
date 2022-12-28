@@ -30,23 +30,87 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+            this.selectColorBox = new System.Windows.Forms.GroupBox();
+            this.blueButton = new System.Windows.Forms.Button();
+            this.greenButton = new System.Windows.Forms.Button();
+            this.yellowButton = new System.Windows.Forms.Button();
+            this.redButton = new System.Windows.Forms.Button();
             this.playersList = new System.Windows.Forms.ListBox();
             this.readyButton = new System.Windows.Forms.Button();
             this.nameTextBox = new System.Windows.Forms.TextBox();
             this.errorLabel = new System.Windows.Forms.Label();
             this.saveNameButton = new System.Windows.Forms.Button();
-            this.startScreen = new System.Windows.Forms.GroupBox();
+            this.mainGroupBox = new System.Windows.Forms.GroupBox();
+            this.selectedColorPicture = new System.Windows.Forms.PictureBox();
             this.yourMoveLabel = new System.Windows.Forms.Label();
             this.deckPicture = new System.Windows.Forms.PictureBox();
-            this.lastCardPicture = new System.Windows.Forms.PictureBox();
+            this.cardOnTablePicture = new System.Windows.Forms.PictureBox();
             this.cardsListView = new System.Windows.Forms.ListView();
             this.cardsList = new System.Windows.Forms.ImageList(this.components);
             this.readyGroup = new System.Windows.Forms.GroupBox();
-            this.startScreen.SuspendLayout();
+            this.selectColorBox.SuspendLayout();
+            this.mainGroupBox.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.selectedColorPicture)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.deckPicture)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.lastCardPicture)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cardOnTablePicture)).BeginInit();
             this.readyGroup.SuspendLayout();
             this.SuspendLayout();
+            // 
+            // selectColorBox
+            // 
+            this.selectColorBox.BackColor = System.Drawing.Color.White;
+            this.selectColorBox.Controls.Add(this.blueButton);
+            this.selectColorBox.Controls.Add(this.greenButton);
+            this.selectColorBox.Controls.Add(this.yellowButton);
+            this.selectColorBox.Controls.Add(this.redButton);
+            this.selectColorBox.Enabled = false;
+            this.selectColorBox.Location = new System.Drawing.Point(340, 279);
+            this.selectColorBox.Name = "selectColorBox";
+            this.selectColorBox.Size = new System.Drawing.Size(350, 125);
+            this.selectColorBox.TabIndex = 10;
+            this.selectColorBox.TabStop = false;
+            this.selectColorBox.Text = "Выберите цвет";
+            this.selectColorBox.Visible = false;
+            // 
+            // blueButton
+            // 
+            this.blueButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(255)))));
+            this.blueButton.Location = new System.Drawing.Point(264, 26);
+            this.blueButton.Name = "blueButton";
+            this.blueButton.Size = new System.Drawing.Size(80, 80);
+            this.blueButton.TabIndex = 3;
+            this.blueButton.UseVisualStyleBackColor = false;
+            this.blueButton.Click += new System.EventHandler(this.blueButton_Click);
+            // 
+            // greenButton
+            // 
+            this.greenButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(170)))), ((int)(((byte)(85)))));
+            this.greenButton.Location = new System.Drawing.Point(178, 26);
+            this.greenButton.Name = "greenButton";
+            this.greenButton.Size = new System.Drawing.Size(80, 80);
+            this.greenButton.TabIndex = 2;
+            this.greenButton.UseVisualStyleBackColor = false;
+            this.greenButton.Click += new System.EventHandler(this.greenButton_Click);
+            // 
+            // yellowButton
+            // 
+            this.yellowButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(170)))), ((int)(((byte)(0)))));
+            this.yellowButton.Location = new System.Drawing.Point(92, 26);
+            this.yellowButton.Name = "yellowButton";
+            this.yellowButton.Size = new System.Drawing.Size(80, 80);
+            this.yellowButton.TabIndex = 1;
+            this.yellowButton.UseVisualStyleBackColor = false;
+            this.yellowButton.Click += new System.EventHandler(this.yellowButton_Click);
+            // 
+            // redButton
+            // 
+            this.redButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
+            this.redButton.Location = new System.Drawing.Point(6, 26);
+            this.redButton.Name = "redButton";
+            this.redButton.Size = new System.Drawing.Size(80, 80);
+            this.redButton.TabIndex = 0;
+            this.redButton.UseVisualStyleBackColor = false;
+            this.redButton.Click += new System.EventHandler(this.redButton_Click);
             // 
             // playersList
             // 
@@ -100,20 +164,31 @@
             this.saveNameButton.Visible = false;
             this.saveNameButton.Click += new System.EventHandler(this.saveNameButton_Click);
             // 
-            // startScreen
+            // mainGroupBox
             // 
-            this.startScreen.Controls.Add(this.yourMoveLabel);
-            this.startScreen.Controls.Add(this.deckPicture);
-            this.startScreen.Controls.Add(this.lastCardPicture);
-            this.startScreen.Controls.Add(this.cardsListView);
-            this.startScreen.Controls.Add(this.readyGroup);
-            this.startScreen.Controls.Add(this.playersList);
-            this.startScreen.Location = new System.Drawing.Point(12, 2);
-            this.startScreen.Name = "startScreen";
-            this.startScreen.Size = new System.Drawing.Size(982, 707);
-            this.startScreen.TabIndex = 5;
-            this.startScreen.TabStop = false;
-            this.startScreen.Visible = false;
+            this.mainGroupBox.Controls.Add(this.selectedColorPicture);
+            this.mainGroupBox.Controls.Add(this.yourMoveLabel);
+            this.mainGroupBox.Controls.Add(this.deckPicture);
+            this.mainGroupBox.Controls.Add(this.cardOnTablePicture);
+            this.mainGroupBox.Controls.Add(this.cardsListView);
+            this.mainGroupBox.Controls.Add(this.readyGroup);
+            this.mainGroupBox.Controls.Add(this.playersList);
+            this.mainGroupBox.Location = new System.Drawing.Point(12, 2);
+            this.mainGroupBox.Name = "mainGroupBox";
+            this.mainGroupBox.Size = new System.Drawing.Size(982, 707);
+            this.mainGroupBox.TabIndex = 5;
+            this.mainGroupBox.TabStop = false;
+            this.mainGroupBox.Visible = false;
+            // 
+            // selectedColorPicture
+            // 
+            this.selectedColorPicture.BackColor = System.Drawing.Color.Red;
+            this.selectedColorPicture.Location = new System.Drawing.Point(472, 337);
+            this.selectedColorPicture.Name = "selectedColorPicture";
+            this.selectedColorPicture.Size = new System.Drawing.Size(80, 80);
+            this.selectedColorPicture.TabIndex = 10;
+            this.selectedColorPicture.TabStop = false;
+            this.selectedColorPicture.Visible = false;
             // 
             // yourMoveLabel
             // 
@@ -128,6 +203,7 @@
             // 
             // deckPicture
             // 
+            this.deckPicture.Cursor = System.Windows.Forms.Cursors.No;
             this.deckPicture.Image = ((System.Drawing.Image)(resources.GetObject("deckPicture.Image")));
             this.deckPicture.Location = new System.Drawing.Point(800, 115);
             this.deckPicture.Name = "deckPicture";
@@ -135,15 +211,16 @@
             this.deckPicture.TabIndex = 8;
             this.deckPicture.TabStop = false;
             this.deckPicture.Visible = false;
+            this.deckPicture.Click += new System.EventHandler(this.deckPicture_Click);
             // 
-            // lastCardPicture
+            // cardOnTablePicture
             // 
-            this.lastCardPicture.Location = new System.Drawing.Point(441, 115);
-            this.lastCardPicture.Name = "lastCardPicture";
-            this.lastCardPicture.Size = new System.Drawing.Size(144, 216);
-            this.lastCardPicture.TabIndex = 7;
-            this.lastCardPicture.TabStop = false;
-            this.lastCardPicture.Visible = false;
+            this.cardOnTablePicture.Location = new System.Drawing.Point(441, 115);
+            this.cardOnTablePicture.Name = "cardOnTablePicture";
+            this.cardOnTablePicture.Size = new System.Drawing.Size(144, 216);
+            this.cardOnTablePicture.TabIndex = 7;
+            this.cardOnTablePicture.TabStop = false;
+            this.cardOnTablePicture.Visible = false;
             // 
             // cardsListView
             // 
@@ -156,6 +233,7 @@
             this.cardsListView.TabIndex = 6;
             this.cardsListView.UseCompatibleStateImageBehavior = false;
             this.cardsListView.Visible = false;
+            this.cardsListView.DoubleClick += new System.EventHandler(this.cardsListView_DoubleClick);
             // 
             // cardsList
             // 
@@ -179,14 +257,16 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1006, 721);
-            this.Controls.Add(this.startScreen);
+            this.Controls.Add(this.mainGroupBox);
             this.Controls.Add(this.errorLabel);
             this.Name = "MainForm";
             this.Text = "Form1";
-            this.startScreen.ResumeLayout(false);
-            this.startScreen.PerformLayout();
+            this.selectColorBox.ResumeLayout(false);
+            this.mainGroupBox.ResumeLayout(false);
+            this.mainGroupBox.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.selectedColorPicture)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.deckPicture)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.lastCardPicture)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cardOnTablePicture)).EndInit();
             this.readyGroup.ResumeLayout(false);
             this.readyGroup.PerformLayout();
             this.ResumeLayout(false);
@@ -196,17 +276,27 @@
 
         #endregion
 
+        private static Color RedColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
+        private static Color YellowColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(170)))), ((int)(((byte)(0)))));
+        private static Color GreenColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(170)))), ((int)(((byte)(85)))));
+        private static Color BlueColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(255)))));
         private ListBox playersList;
         private Button readyButton;
         private TextBox nameTextBox;
         private Label errorLabel;
         private Button saveNameButton;
-        private GroupBox startScreen;
+        private GroupBox mainGroupBox;
         private GroupBox readyGroup;
         private ListView cardsListView;
         private ImageList cardsList;
-        private PictureBox lastCardPicture;
+        private PictureBox cardOnTablePicture;
         private PictureBox deckPicture;
         private Label yourMoveLabel;
+        private GroupBox selectColorBox;
+        private Button yellowButton;
+        private Button redButton;
+        private Button blueButton;
+        private Button greenButton;
+        private PictureBox selectedColorPicture;
     }
 }
