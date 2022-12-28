@@ -10,11 +10,17 @@ public class Player
         Cards = new List<Card>();
     }
 
+    public void AddCard(Card card)
+    {
+        Cards.Add(card);
+        Cards = Cards.OrderBy(c => (int)c.Type).OrderBy(c => (int)c.Color).ToList();
+    }
+
     public bool Ready;
 
     public readonly int Id;
 
     public readonly string Name;
 
-    public readonly List<Card> Cards;
+    public List<Card> Cards { get; private set; }
 }

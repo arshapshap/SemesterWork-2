@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.playersList = new System.Windows.Forms.ListBox();
             this.readyButton = new System.Windows.Forms.Button();
             this.nameTextBox = new System.Windows.Forms.TextBox();
@@ -39,9 +40,11 @@
             this.cardsListView = new System.Windows.Forms.ListView();
             this.cardsList = new System.Windows.Forms.ImageList(this.components);
             this.readyGroup = new System.Windows.Forms.GroupBox();
+            this.deckPicture = new System.Windows.Forms.PictureBox();
             this.startScreen.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.lastCardPicture)).BeginInit();
             this.readyGroup.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.deckPicture)).BeginInit();
             this.SuspendLayout();
             // 
             // playersList
@@ -97,6 +100,7 @@
             // 
             // startScreen
             // 
+            this.startScreen.Controls.Add(this.deckPicture);
             this.startScreen.Controls.Add(this.lastCardPicture);
             this.startScreen.Controls.Add(this.cardsListView);
             this.startScreen.Controls.Add(this.readyGroup);
@@ -146,6 +150,16 @@
             this.readyGroup.TabIndex = 5;
             this.readyGroup.TabStop = false;
             // 
+            // deckPicture
+            // 
+            this.deckPicture.Image = ((System.Drawing.Image)(resources.GetObject("deckPicture.Image")));
+            this.deckPicture.Location = new System.Drawing.Point(800, 115);
+            this.deckPicture.Name = "deckPicture";
+            this.deckPicture.Size = new System.Drawing.Size(144, 216);
+            this.deckPicture.TabIndex = 8;
+            this.deckPicture.TabStop = false;
+            this.deckPicture.Visible = false;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
@@ -159,6 +173,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.lastCardPicture)).EndInit();
             this.readyGroup.ResumeLayout(false);
             this.readyGroup.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.deckPicture)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -176,5 +191,6 @@
         private ListView cardsListView;
         private ImageList cardsList;
         private PictureBox lastCardPicture;
+        private PictureBox deckPicture;
     }
 }

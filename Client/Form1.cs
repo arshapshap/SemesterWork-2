@@ -3,13 +3,14 @@ using XProtocol;
 using GameLogic;
 using XProtocol.XPackets;
 using GameLogic.Cards;
+using System.Numerics;
 
 namespace Client
 {
     public partial class Form1 : Form
     {
         string imagesPath = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName + @"\images";
-        Player player;
+        public Player Player { get; internal set; }
         XClient client;
 
         public Form1()
@@ -17,7 +18,7 @@ namespace Client
             InitializeComponent();
             try
             {
-                ConnectClient();
+                client = XClient.ConnectClient(this);
             }
             catch
             {
@@ -27,93 +28,13 @@ namespace Client
 
         }
 
-        private void ConnectClient()
-        {
-            client = new XClient();
-            client.OnPacketReceive += OnPacketRecieve;
-            client.Connect("127.0.0.1", 4910);
-
-            Console.WriteLine("Sending handshake packet..");
-
-            client.QueuePacketSend(
-                XPacketConverter.Serialize(
-                    XPacketType.Handshake,
-                    new XPacketHandshake
-                    {
-                        Id = -1
-                    })
-                    .ToPacket());
-        }
-        private void OnPacketRecieve(byte[] packet)
-        {
-            var parsed = XPacket.Parse(packet);
-
-            if (parsed != null)
-            {
-                ProcessIncomingPacket(parsed);
-            }
-        }
-
-        private void ProcessIncomingPacket(XPacket packet)
-        {
-            var type = XPacketTypeManager.GetTypeFromPacket(packet);
-
-            switch (type)
-            {
-                case XPacketType.Handshake:
-                    ProcessHandshake(packet);
-                    break;
-                case XPacketType.NewPlayer:
-                    ProcessNewPlayer(packet);
-                    break;
-                case XPacketType.PlayerReady:
-                    ProcessPlayerReady(packet);
-                    break;
-                case XPacketType.GameStart:
-                    ProcessGameStart(packet);
-                    break;
-                case XPacketType.UpdateCardOnTable:
-                    ProcessUpdateCardOnTable(packet);
-                    break;
-                case XPacketType.AddCardToHand:
-                    ProcessAddCardToHand(packet);
-                    break;
-                case XPacketType.Unknown:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        private void ProcessAddCardToHand(XPacket packet)
-        {
-            var cardPacket = XPacketConverter.Deserialize<XPacketAddCardToHand>(packet);
-            var card = new Card((CardType)cardPacket.CardType, (CardColor)cardPacket.CardColor);
-
-            BeginInvoke(new Action(() =>
-            {
-                AddCard(card);
-            }));
-        }
-
-        private void ProcessUpdateCardOnTable(XPacket packet)
-        {
-            var cardPacket = XPacketConverter.Deserialize<XPacketUpdateCardOnTable>(packet);
-            var card = new Card((CardType)cardPacket.CardType, (CardColor)cardPacket.CardColor);
-
-            BeginInvoke(new Action(() =>
-            {
-                UpdateCardOnTable(card);
-            }));
-        }
-
-        private void UpdateCardOnTable(Card card)
+        internal void UpdateCardOnTable(Card card)
         {
             var cardFileName = $"{card.Color}_{(int)card.Type}";
             lastCardPicture.Image = Image.FromFile(imagesPath + @$"\{cardFileName}.png");
         }
 
-        private void AddCard(Card card)
+        internal void AddCard(Card card)
         {
             var cardFileName = $"{card.Color}_{(int)card.Type}";
             if (!cardsList.Images.ContainsKey(cardFileName))
@@ -121,64 +42,51 @@ namespace Client
             cardsListView.Items.Add("", cardFileName);
         }
 
-        private void ProcessGameStart(XPacket packet)
+        internal void GameStart(Card lastCard, Card[] cards)
         {
-            BeginInvoke(new Action(() =>
-            {
-                readyGroup.Dispose();
-                cardsListView.Visible = true;
-                lastCardPicture.Visible = true;
-                for (int i = 0; i < playersList.Items.Count; i++)
-                    playersList.Items[i] = $"Player{i} [7 карт]";
-            }));
+            readyGroup.Dispose();
+            cardsListView.Visible = true;
+            lastCardPicture.Visible = true;
+            deckPicture.Visible = true;
+
+            for (int i = 0; i < playersList.Items.Count; i++)
+                playersList.Items[i] = $"Player{i} [7 карт]";
+
+            foreach (var card in cards)
+                AddCard(card);
+            UpdateCardOnTable(lastCard);
         }
 
-        private void ProcessPlayerReady(XPacket packet)
+        internal void PlayerReady(int id)
         {
-            var player = XPacketConverter.Deserialize<XPacketPlayerReady>(packet);
-            BeginInvoke(new Action(() =>
-            {
-                playersList.Items[player.Id - 1] = $"Player{player.Id} [Готов]";
-            }));
+            playersList.Items[id - 1] = $"Player{id} [Готов]";
         }
 
-        private void ProcessHandshake(XPacket packet)
+        internal void Handshake(int id, bool alreadyStarted)
         {
-            var handshake = XPacketConverter.Deserialize<XPacketHandshake>(packet);
-
-            if (handshake.Id > 10)
-                BeginInvoke(new Action(() =>
-                {
-                    errorLabel.Text = "Игра уже заполнена (максимум 10 игроков)";
-                    errorLabel.Visible = true;
-                }));
-            else if (handshake.AlreadyStarted)
-                BeginInvoke(new Action(() =>
-                {
-                    errorLabel.Text = "Игра уже началась";
-                    errorLabel.Visible = true;
-                }));
+            if (id > 10)
+            {
+                errorLabel.Text = "Игра уже заполнена (максимум 10 игроков)";
+                errorLabel.Visible = true;
+            }
+            else if (alreadyStarted)
+            {
+                errorLabel.Text = "Игра уже началась";
+                errorLabel.Visible = true;
+            }
             else
             {
-                player = new Player(handshake.Id);
+                Player = new Player(id);
 
-                BeginInvoke(new Action(() =>
-                {
-                    Text = $"Player{player.Id}";
-                    startScreen.Visible = true;
-                    nameTextBox.Text = $"Player{player.Id}";
-                }));
-
+                Text = $"Player{Player.Id}";
+                startScreen.Visible = true;
+                nameTextBox.Text = $"Player{Player.Id}";
             }
         }
 
-        private void ProcessNewPlayer(XPacket packet)
+        internal void NewPlayer(int id, bool ready)
         {
-            var newPlayer = XPacketConverter.Deserialize<XPacketNewPlayer>(packet);
-            BeginInvoke(new Action(() =>
-            {
-                playersList.Items.Add($"Player{newPlayer.Id}{(newPlayer.Ready ? " [Готов]" : "")}");
-            }));
+            playersList.Items.Add($"Player{id}{(ready ? " [Готов]" : "")}");
         }
 
         private void readyButton_Click(object sender, EventArgs e)

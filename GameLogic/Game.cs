@@ -33,15 +33,16 @@ namespace GameLogic
             DealCards();
 
             var lastCard = Deck.Pop();
+            Console.WriteLine("Выбор первой карты");
             while (!Card.OrdinalCardTypes.Contains(lastCard.Type))
             {
+                Console.WriteLine("Попытка выбора первой карты");
                 Deck.Push(lastCard);
                 lastCard = Deck.Pop();
             }
+            Console.WriteLine("Карта выбралась");
 
             LastCard = lastCard;
-
-
         }
 
         private void DealCards()
@@ -52,7 +53,7 @@ namespace GameLogic
                     if (Deck.Count == 0)
                         FillDeckFromDiscardPile();
 
-                    player.Cards.Add(Deck.Pop());
+                    player.AddCard(Deck.Pop());
                 }
         }
 
