@@ -119,6 +119,9 @@ namespace TCPServer
             {
                 client.QueuePacketSend(XPacketType.SuccessfulMove, successfulMove);
 
+                if (Game.IsOver == true)
+                    client.QueuePacketSend(XPacketType.GameOver, new XPacketGameOver() { WinnerId = Game.WinnerId });
+
                 if (newCards.ContainsKey(client.Player.Id))
                 {
                     foreach (var newCard in newCards[client.Player.Id])

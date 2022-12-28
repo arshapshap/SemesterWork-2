@@ -1,6 +1,7 @@
 ﻿using GameLogic.Cards;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -21,6 +22,8 @@ namespace GameLogic
         public Card CardOnTable { get; private set; }
         public CardColor? SelectedColor { get; private set; }
         public bool Reversed { get; private set; }
+        public bool IsOver { get; private set; }
+        public int WinnerId { get; private set; }
 
         public Game(Player[] players)
         {
@@ -51,29 +54,37 @@ namespace GameLogic
         public bool TryMove(Player player, Card card, out Dictionary<int, Card[]> newCards, CardColor? selectedColor = null)
         {
             newCards = new Dictionary<int, Card[]>();
-            if (!CheckMoveCorrect(card))
+            if (!CheckMoveCorrect(card) && !CheckMoveInterception(card))
                 return false;
+            else if (CheckMoveInterception(card))
+                CurrentPlayerId = player.Id;
 
             player.TakeCard(card);
             CardOnTable = card;
-            CurrentPlayerId = NextPlayer();
             SelectedColor = selectedColor;
 
+            if (player.Cards.Count == 0)
+            {
+                IsOver = true;
+                WinnerId = player.Id;
+                return true;
+            }
+
             if (card.Type == CardType.Skip)
-                CurrentPlayerId = NextPlayer();
+                NextPlayer();
             else if (card.Type == CardType.Reverse)
                 Reversed = !Reversed;
             else if (card.Type == CardType.PlusTwo)
             {
+                NextPlayer();
                 newCards[CurrentPlayerId] = AddCards(CurrentPlayerId, 2);
-                CurrentPlayerId = NextPlayer();
             }
             else if (card.Type == CardType.PlusFour)
             {
+                NextPlayer();
                 newCards[CurrentPlayerId] = AddCards(CurrentPlayerId, 4);
-                CurrentPlayerId = NextPlayer();
             }
-
+            NextPlayer();
             return true;
         }
 
@@ -95,13 +106,24 @@ namespace GameLogic
                 || (cardOnTable.Color == CardColor.Black && card.Color == selectedColor)
                 || card.Type == cardOnTable.Type;
 
-        public int NextPlayer() 
-            => Reversed ?
-                ((CurrentPlayerId + Players.Length - 2) % Players.Length) + 1
-                : (CurrentPlayerId % Players.Length) + 1;
+        public static bool CheckMoveInterception(Card cardOnTable, Card card, CardColor? selectedColor = null)
+            => card.Color == cardOnTable.Color 
+            && card.Type == cardOnTable.Type
+            && !(card.Color == CardColor.Black && card.Type == CardType.PlusFour);
+
+        public int NextPlayer()
+        {
+            CurrentPlayerId = Reversed ?
+                        ((CurrentPlayerId + Players.Length - 2) % Players.Length) + 1
+                        : (CurrentPlayerId % Players.Length) + 1;
+            return CurrentPlayerId;
+        }
 
         public bool CheckMoveCorrect(Card card)
             => CheckMoveCorrect(CardOnTable, card, SelectedColor);
+
+        public bool CheckMoveInterception(Card card)
+            => CheckMoveInterception(CardOnTable, card, SelectedColor);
 
         private Card[] AddCards(int playerId, int count)
         {

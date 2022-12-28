@@ -12,6 +12,7 @@
         AddCardToHand,
         SuccessfulMove,
         ChangeCardsCount,
-        SkipMove
+        SkipMove,
+        GameOver
     }
 }

@@ -166,6 +166,7 @@ public class XClient
         var card = new Card((CardType)move.CardType, (CardColor)move.CardColor);
         Form.BeginInvoke(new Action(() =>
         {
+            Form.FirstMove = false;
             Form.UpdateCardOnTable(card, (card.Color == CardColor.Black) ? (CardColor)move.SelectedColor : null);
             if (move.PlayerId == Form.Player.Id)
                 Form.RemoveCardFromHand(card);

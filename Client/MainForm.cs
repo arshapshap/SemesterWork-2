@@ -14,6 +14,7 @@ namespace Client
         public Player Player { get; internal set; }
         internal int[] PlayersCardsCount { get; private set; }
 
+        internal bool FirstMove { get; set; } = true;
         XClient client;
         Card cardOnTable;
         CardColor? selectedCardOnTableColor;
@@ -210,15 +211,16 @@ namespace Client
                 ListViewItem item = cardsListView.SelectedItems[0];
                 var card = Card.FromString(item.ImageKey);
 
-                if ((currentPlayerId == Player.Id && Game.CheckMoveCorrect(cardOnTable, card, selectedCardOnTableColor)
-                    || Game.CheckMoveInterception(cardOnTable, card, selectedCardOnTableColor)) 
-                    && card.Color != CardColor.Black)
+                var isMoveAvailable = (currentPlayerId == Player.Id && Game.CheckMoveCorrect(cardOnTable, card, selectedCardOnTableColor)
+                    || Game.CheckMoveInterception(cardOnTable, card, selectedCardOnTableColor) && !FirstMove);
+
+                if (isMoveAvailable && card.Color != CardColor.Black)
                     client.QueuePacketSend(XPacketType.UpdateCardOnTable, new XPacketUpdateCardOnTable()
                     {
                         CardType = (int)card.Type,
                         CardColor = (int)card.Color
                     });
-                else if (card.Color == CardColor.Black)
+                else if (isMoveAvailable && card.Color == CardColor.Black)
                 {
                     selectedCard = card;
 
