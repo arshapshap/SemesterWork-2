@@ -1,6 +1,6 @@
 ﻿namespace Client
 {
-    partial class Form1
+    partial class MainForm
     {
         /// <summary>
         ///  Required designer variable.
@@ -29,22 +29,23 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.playersList = new System.Windows.Forms.ListBox();
             this.readyButton = new System.Windows.Forms.Button();
             this.nameTextBox = new System.Windows.Forms.TextBox();
             this.errorLabel = new System.Windows.Forms.Label();
             this.saveNameButton = new System.Windows.Forms.Button();
             this.startScreen = new System.Windows.Forms.GroupBox();
+            this.yourMoveLabel = new System.Windows.Forms.Label();
+            this.deckPicture = new System.Windows.Forms.PictureBox();
             this.lastCardPicture = new System.Windows.Forms.PictureBox();
             this.cardsListView = new System.Windows.Forms.ListView();
             this.cardsList = new System.Windows.Forms.ImageList(this.components);
             this.readyGroup = new System.Windows.Forms.GroupBox();
-            this.deckPicture = new System.Windows.Forms.PictureBox();
             this.startScreen.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.deckPicture)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.lastCardPicture)).BeginInit();
             this.readyGroup.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.deckPicture)).BeginInit();
             this.SuspendLayout();
             // 
             // playersList
@@ -68,6 +69,7 @@
             // 
             // nameTextBox
             // 
+            this.nameTextBox.Enabled = false;
             this.nameTextBox.Location = new System.Drawing.Point(50, 38);
             this.nameTextBox.Name = "nameTextBox";
             this.nameTextBox.Size = new System.Drawing.Size(125, 27);
@@ -100,6 +102,7 @@
             // 
             // startScreen
             // 
+            this.startScreen.Controls.Add(this.yourMoveLabel);
             this.startScreen.Controls.Add(this.deckPicture);
             this.startScreen.Controls.Add(this.lastCardPicture);
             this.startScreen.Controls.Add(this.cardsListView);
@@ -111,6 +114,27 @@
             this.startScreen.TabIndex = 5;
             this.startScreen.TabStop = false;
             this.startScreen.Visible = false;
+            // 
+            // yourMoveLabel
+            // 
+            this.yourMoveLabel.AutoSize = true;
+            this.yourMoveLabel.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.yourMoveLabel.Location = new System.Drawing.Point(446, 23);
+            this.yourMoveLabel.Name = "yourMoveLabel";
+            this.yourMoveLabel.Size = new System.Drawing.Size(139, 41);
+            this.yourMoveLabel.TabIndex = 9;
+            this.yourMoveLabel.Text = "Ваш ход!";
+            this.yourMoveLabel.Visible = false;
+            // 
+            // deckPicture
+            // 
+            this.deckPicture.Image = ((System.Drawing.Image)(resources.GetObject("deckPicture.Image")));
+            this.deckPicture.Location = new System.Drawing.Point(800, 115);
+            this.deckPicture.Name = "deckPicture";
+            this.deckPicture.Size = new System.Drawing.Size(144, 216);
+            this.deckPicture.TabIndex = 8;
+            this.deckPicture.TabStop = false;
+            this.deckPicture.Visible = false;
             // 
             // lastCardPicture
             // 
@@ -150,30 +174,21 @@
             this.readyGroup.TabIndex = 5;
             this.readyGroup.TabStop = false;
             // 
-            // deckPicture
-            // 
-            this.deckPicture.Image = ((System.Drawing.Image)(resources.GetObject("deckPicture.Image")));
-            this.deckPicture.Location = new System.Drawing.Point(800, 115);
-            this.deckPicture.Name = "deckPicture";
-            this.deckPicture.Size = new System.Drawing.Size(144, 216);
-            this.deckPicture.TabIndex = 8;
-            this.deckPicture.TabStop = false;
-            this.deckPicture.Visible = false;
-            // 
-            // Form1
+            // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1006, 721);
             this.Controls.Add(this.startScreen);
             this.Controls.Add(this.errorLabel);
-            this.Name = "Form1";
+            this.Name = "MainForm";
             this.Text = "Form1";
             this.startScreen.ResumeLayout(false);
+            this.startScreen.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.deckPicture)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.lastCardPicture)).EndInit();
             this.readyGroup.ResumeLayout(false);
             this.readyGroup.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.deckPicture)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -192,5 +207,6 @@
         private ImageList cardsList;
         private PictureBox lastCardPicture;
         private PictureBox deckPicture;
+        private Label yourMoveLabel;
     }
 }

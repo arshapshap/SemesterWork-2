@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,6 +15,8 @@ namespace GameLogic
         public readonly Player[] Players;
         public readonly Stack<Card> Deck;
         public readonly Stack<Card> DiscardPile;
+
+        public int CurrentPlayerId { get; private set; }
 
         public Card LastCard { get; private set; }
 
@@ -32,17 +35,21 @@ namespace GameLogic
         {
             DealCards();
 
-            var lastCard = Deck.Pop();
-            Console.WriteLine("Выбор первой карты");
+            var lastCard = PopFromDeck();
             while (!Card.OrdinalCardTypes.Contains(lastCard.Type))
             {
-                Console.WriteLine("Попытка выбора первой карты");
                 Deck.Push(lastCard);
-                lastCard = Deck.Pop();
+                lastCard = PopFromDeck();
             }
-            Console.WriteLine("Карта выбралась");
 
             LastCard = lastCard;
+
+            CurrentPlayerId = Players[rng.Next(Players.Length)].Id;
+        }
+
+        public void Move(Player player, Card card)
+        {
+
         }
 
         private void DealCards()
@@ -50,10 +57,7 @@ namespace GameLogic
             foreach (var player in Players)
                 for (int i = 0; i < 7; i++)
                 {
-                    if (Deck.Count == 0)
-                        FillDeckFromDiscardPile();
-
-                    player.AddCard(Deck.Pop());
+                    player.AddCard(PopFromDeck());
                 }
         }
 
@@ -98,6 +102,14 @@ namespace GameLogic
             }
 
             return new Stack<Card>(Shuffle(cards));
+        }
+
+        private Card PopFromDeck()
+        {
+            if (Deck.Count == 0)
+                FillDeckFromDiscardPile();
+
+            return Deck.Pop();
         }
     }
 }

@@ -75,19 +75,12 @@ namespace TCPServer
 
         internal void StartGameIfAllReady()
         {
-            Console.WriteLine("До условия");
             if (_clients.Count > 1 && _clients.All(c => c.Player.Ready) && Game == null)
             {
-                Console.WriteLine("Начало условия");
                 Game = new Game(_clients.Select(c => c.Player).ToArray());
-                Console.WriteLine("1");
                 Game.Start();
-                Console.WriteLine("2");
-                Thread.Sleep(200);
-                Console.WriteLine("До форыча");
                 _clients.ForEach(c =>
                 {
-                    Console.WriteLine("Начало форыча");
                     var gameStart = new XPacketGameStart()
                     {
                         CardOnTableType = (int)Game.LastCard.Type,
@@ -107,13 +100,15 @@ namespace TCPServer
                         Card7Type = (int)c.Player.Cards[6].Type,
                         Card7Color = (int)c.Player.Cards[6].Color,
                     };
+                    var currentPlayer = new XPacketCurrentPlayer()
+                    {
+                        Id = Game.CurrentPlayerId
+                    };
 
                     c.QueuePacketSend(XProtocol.XPacketType.GameStart, gameStart);
-                    Console.WriteLine("Конец форыча");
+                    c.QueuePacketSend(XProtocol.XPacketType.CurrentPlayer, currentPlayer);
                 });
-                Console.WriteLine("Конец условия");
             }
-            Console.WriteLine("После условия");
         }
     }
 }

@@ -9,5 +9,6 @@
         GameStart,
         UpdateCardOnTable,
         AddCardToHand,
+        CurrentPlayer,
     }
 }

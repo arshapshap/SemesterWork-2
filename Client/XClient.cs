@@ -15,7 +15,7 @@ public class XClient
     public Action<byte[]> OnPacketReceive { get; set; }
 
     private readonly Queue<byte[]> _packetSendingQueue = new Queue<byte[]>();
-    public Form1 Form { get; private set; }
+    public MainForm Form { get; private set; }
     private Socket _socket;
     private IPEndPoint _serverEndPoint;
     
@@ -62,7 +62,7 @@ public class XClient
         }
     }
 
-    internal static XClient ConnectClient(Form1 form)
+    internal static XClient ConnectClient(MainForm form)
     {
         var client = new XClient();
         client.OnPacketReceive += client.OnPacketRecieve;
@@ -111,6 +111,9 @@ public class XClient
             case XPacketType.GameStart:
                 ProcessGameStart(packet);
                 break;
+            case XPacketType.CurrentPlayer:
+                ProcessCurrentPlayer(packet);
+                break;
             case XPacketType.UpdateCardOnTable:
                 ProcessUpdateCardOnTable(packet);
                 break;
@@ -122,6 +125,16 @@ public class XClient
             default:
                 throw new ArgumentOutOfRangeException();
         }
+    }
+
+    private void ProcessCurrentPlayer(XPacket packet)
+    {
+        var currentPlayer = XPacketConverter.Deserialize<XPacketCurrentPlayer>(packet);
+
+        Form.BeginInvoke(new Action(() =>
+        {
+            Form.ChangeCurrentPlayer(currentPlayer.Id);
+        }));
     }
 
     private void ProcessAddCardToHand(XPacket packet)
