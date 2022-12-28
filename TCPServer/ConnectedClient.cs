@@ -73,11 +73,31 @@ namespace TCPServer
                 case XPacketType.AddCardToHand:
                     ProcessAddCardToHand(packet);
                     break;
+                case XPacketType.Uno:
+                    ProcessUno(packet);
+                    break;
+                case XPacketType.PlayerDidntSayUno:
+                    ProcessPlayerDidntSayUno(packet);
+                    break;
                 case XPacketType.Unknown:
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+
+        private void ProcessPlayerDidntSayUno(XPacket packet)
+        {
+            var playerPacket = XPacketConverter.Deserialize<XPacketPlayerDidntSayUno>(packet);
+            var playerId = playerPacket.PlayerId;
+            if (!_server.Game.Players[playerId - 1].Uno)
+                _server.UnoPenalty(playerId);
+        }
+
+        private void ProcessUno(XPacket packet)
+        {
+            Player.Uno = true;
+            _server.SendToAllClients(XPacketType.Uno, new XPacketUno() { PlayerId = Player.Id });
         }
 
         private void ProcessAddCardToHand(XPacket packet)

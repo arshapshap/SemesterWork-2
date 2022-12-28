@@ -14,6 +14,8 @@ public class Player
     {
         Cards.Add(card);
         Sort();
+
+        Uno = false;
     }
 
     public void TakeCard(Card card)
@@ -28,10 +30,12 @@ public class Player
     }
 
     public bool Ready;
+    public bool Uno;
 
     public readonly int Id;
 
     public readonly string Name;
 
     public List<Card> Cards { get; private set; }
+
 }

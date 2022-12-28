@@ -125,6 +125,9 @@ namespace GameLogic
         public bool CheckMoveInterception(Card card)
             => CheckMoveInterception(CardOnTable, card, SelectedColor);
 
+        public Card[] UnoPenalty(int playerId)
+            => AddCards(playerId, 2);
+
         private Card[] AddCards(int playerId, int count)
         {
             var newCardsList = new List<Card>();
@@ -132,7 +135,7 @@ namespace GameLogic
             {
                 var newCard = PopFromDeck();
                 newCardsList.Add(newCard);
-                Players[playerId - 1].Cards.Add(newCard);
+                Players[playerId - 1].AddCard(newCard);
             }
             return newCardsList.ToArray();
         }

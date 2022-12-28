@@ -20,6 +20,8 @@ namespace XProtocol
             RegisterType(XPacketType.ChangeCardsCount, 2, 3);
             RegisterType(XPacketType.SuccessfulMove, 2, 4);
             RegisterType(XPacketType.SkipMove, 2, 5);
+            RegisterType(XPacketType.Uno, 2, 6);
+            RegisterType(XPacketType.PlayerDidntSayUno, 2, 7);
             RegisterType(XPacketType.GameOver, 3, 0);
         }
 

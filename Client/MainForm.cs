@@ -13,6 +13,7 @@ namespace Client
 
         public Player Player { get; internal set; }
         internal int[] PlayersCardsCount { get; private set; }
+        internal bool[] PlayersUno { get; private set; }
 
         internal bool FirstMove { get; set; } = true;
         XClient client;
@@ -90,6 +91,8 @@ namespace Client
             Player.TakeCard(card);
             SortCardsInHand();
             DecreaseCardsNumber(Player.Id);
+
+            unoButton.Visible = Player.Cards.Count == 1;
         }
 
         internal void DecreaseCardsNumber(int playerId)
@@ -100,13 +103,30 @@ namespace Client
 
         internal void UpdatePlayerInfo(int playerId)
         {
-            playersList.Items[playerId - 1] = $"{((currentPlayerId == playerId) ? ">>> " : "")}Player{playerId} [{PlayersCardsCount[playerId - 1]} карт]";
+            var playerInfo = $"{((currentPlayerId == playerId) ? ">>> " : "")}Player{playerId}";
+            playerInfo += PlayersUno[playerId - 1] ? $" [УНО]" : $" [{PlayersCardsCount[playerId - 1]} карт]";
+            playersList.Items[playerId - 1] = playerInfo;
+        }
+
+        internal void Uno(int playerId)
+        {
+            PlayersUno[playerId - 1] = true;
+            UpdatePlayerInfo(playerId);
+        }
+
+        internal void ChangeCardsCount(int playerId, int cardsCount)
+        {
+            PlayersCardsCount[playerId - 1] = cardsCount;
+            PlayersUno[playerId - 1] = false;
+            UpdatePlayerInfo(playerId);
         }
 
         internal void AddCardToHand(Card card)
         {
             Player.AddCard(card);
             SortCardsInHand();
+
+            unoButton.Visible = Player.Cards.Count == 1;
         }
 
         internal void SortCardsInHand()
@@ -123,12 +143,14 @@ namespace Client
 
         internal void GameStart(Card lastCard, Card[] cards)
         {
-            readyGroup.Dispose();
+            readyGroupBox.Dispose();
+            rulesLabel.Dispose();
             cardsListView.Visible = true;
             cardOnTablePicture.Visible = true;
             deckPicture.Visible = true;
 
             PlayersCardsCount = new int[playersList.Items.Count];
+            PlayersUno = new bool[playersList.Items.Count];
             for (int id = 1; id <= playersList.Items.Count; id++)
             {
                 PlayersCardsCount[id - 1] = 7;
@@ -202,6 +224,22 @@ namespace Client
         {
             //saveNameButton.Enabled = false;
             //saveNameButton.Visible = false;
+        }
+
+        private void unoButton_Click(object sender, EventArgs e)
+        {
+            client.QueuePacketSend(XPacketType.Uno, new XPacketUno());
+            unoButton.Visible = false;
+        }
+
+        private void playersList_DoubleClick(object sender, EventArgs e)
+        {
+            if (currentPlayerId >= 0 && playersList.SelectedItems.Count >= 1)
+            {
+                var playerId = playersList.SelectedIndex + 1;
+                if (PlayersCardsCount[playerId - 1] == 1)
+                    client.QueuePacketSend(XPacketType.PlayerDidntSayUno, new XPacketPlayerDidntSayUno() { PlayerId = playerId });
+            }
         }
 
         private void cardsListView_DoubleClick(object sender, EventArgs e)

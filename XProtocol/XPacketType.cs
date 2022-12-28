@@ -13,6 +13,8 @@
         SuccessfulMove,
         ChangeCardsCount,
         SkipMove,
+        Uno,
+        PlayerDidntSayUno,
         GameOver
     }
 }

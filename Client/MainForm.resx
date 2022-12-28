@@ -57,11 +57,19 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="rulesLabel.Text" xml:space="preserve">
+    <value>Подсказки:
+- Ход: двойной клик по нужной карте
+- Перехват: двойной клик по карте, идентичной лежащей на столе (кроме "+4")
+- Добор из колоды: клик по колоде (доступно, когда у Вас нет подходящих карт)
+- "Уно!": клик по кнопке (доступно, когда у Вас 1 карта)
+- "Уно!": двойной клик по имени игрока, не сообщившего о том, что у него 1 карта</value>
+  </data>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="deckPicture.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAANcAAACQCAYAAACbIP5hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
-        wAAADsABataJCQAAHHBJREFUeF7tnQmQFMWexgG5UQRUFCEUYZeFh7cIGk/DCxUJDxQF8YEgEopyhK54
+        vAAADrwBlbxySQAAHHBJREFUeF7tnQmQFMWexgG5UQRUFCEUYZeFh7cIGk/DCxUJDxQF8YEgEopyhK54
         wAhooCDiggiLyKUotyv3Kcgh4KDyBOQIQAVBEBAFGRiGnqEnt76szO7s7n9PV890V2VP5Uf8opvqqars
         yvo6szL/mVkmlbqiwRWsRo0a7Nxzz2WVK1dm5cuXZ9Zmg0FLzjnnHFapUiVWtWpVVr16dXbJJZewRx99
         FJ/po/LVKresUrUKu+OOO9jLL7/Mxo8fzxYvXszWrl3LfvjhB7Zp0yaDQTu++eYbtmzZMjZ16lQ2YMAA
@@ -189,6 +197,6 @@
     <value>17, 17</value>
   </metadata>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>89</value>
+    <value>33</value>
   </metadata>
 </root>

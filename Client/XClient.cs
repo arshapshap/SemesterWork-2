@@ -122,6 +122,9 @@ public class XClient
             case XPacketType.SkipMove:
                 ProcessSkipMove(packet);
                 break;
+            case XPacketType.Uno:
+                ProcessUno(packet);
+                break;
             case XPacketType.GameOver:
                 ProcessGameOver(packet);
                 break;
@@ -131,6 +134,16 @@ public class XClient
                 throw new ArgumentOutOfRangeException();
         }
     }
+
+    private void ProcessUno(XPacket packet)
+    {
+        var uno = XPacketConverter.Deserialize<XPacketUno>(packet);
+        Form.BeginInvoke(new Action(() =>
+        {
+            Form.Uno(uno.PlayerId);
+        }));
+    }
+
     private void ProcessGameOver(XPacket packet)
     {
         var gameOver = XPacketConverter.Deserialize<XPacketGameOver>(packet);
@@ -155,8 +168,7 @@ public class XClient
         var cardsCount = XPacketConverter.Deserialize<XPacketChangeCardsCount>(packet);
         Form.BeginInvoke(new Action(() =>
         {
-            Form.PlayersCardsCount[cardsCount.PlayerId - 1] = cardsCount.CardsCount;
-            Form.UpdatePlayerInfo(cardsCount.PlayerId);
+            Form.ChangeCardsCount(cardsCount.PlayerId, cardsCount.CardsCount);
         }));
     }
 

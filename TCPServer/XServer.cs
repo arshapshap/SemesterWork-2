@@ -113,6 +113,30 @@ namespace TCPServer
             }
         }
 
+        internal void UnoPenalty(int playerId)
+        {
+            var newCards = Game.UnoPenalty(playerId);
+            var changeCardsCount = new XPacketChangeCardsCount()
+            {
+                PlayerId = playerId,
+                CardsCount = Game.Players[playerId - 1].Cards.Count
+            };
+            foreach (var client in _clients)
+            {
+                if (client.Player.Id == playerId)
+                    foreach (var card in newCards)
+                    {
+                        var addCard = new XPacketAddCardToHand()
+                        {
+                            CardType = (int)card.Type,
+                            CardColor = (int)card.Color,
+                        };
+                        client.QueuePacketSend(XPacketType.AddCardToHand, addCard);
+                    }
+                client.QueuePacketSend(XPacketType.ChangeCardsCount, changeCardsCount);
+            }
+        }
+
         internal void UpdateCardOnTable(XPacketSuccessfulMove successfulMove, Dictionary<int, Card[]> newCards)
         {
             foreach (var client in _clients)
