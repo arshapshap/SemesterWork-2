@@ -4,6 +4,7 @@ using GameLogic;
 using XProtocol.XPackets;
 using GameLogic.Cards;
 using System.Numerics;
+using System.Windows.Forms;
 
 namespace Client
 {
@@ -114,6 +115,15 @@ namespace Client
             UpdatePlayerInfo(playerId);
         }
 
+        internal void ShowHint(string hint)
+        {
+            hintLabel.Text = hint;
+            hintLabel.Visible = true;
+        }
+
+        internal void HideHint() 
+            => hintLabel.Visible = false;
+
         internal void ChangeCardsCount(int playerId, int cardsCount)
         {
             PlayersCardsCount[playerId - 1] = cardsCount;
@@ -188,6 +198,36 @@ namespace Client
             }
         }
 
+        internal void SuccessfulMove(int playerId, int skipPlayerId, int nextPlayerId, Card card, CardColor selectedColor)
+        {
+            HideHint();
+            FirstMove = false;
+            UpdateCardOnTable(card, (card.Color == CardColor.Black) ? (CardColor)selectedColor : null);
+            if (playerId == Player.Id)
+                RemoveCardFromHand(card);
+            else
+                DecreaseCardsNumber(playerId);
+            ChangeCurrentPlayer(nextPlayerId);
+
+            if (Player.Id == skipPlayerId)
+                ShowHint(GetHint(card.Type));
+        }
+
+        private string GetHint(CardType cardType)
+        {
+            switch (cardType)
+            {
+                case CardType.Skip:
+                    return "Карта \"Пропуск хода\":\nВы пропустили ход.";
+                case CardType.PlusTwo:
+                    return "Карта \"+2\":\nВы взяли 2 карты и пропустили ход.";
+                case CardType.PlusFour:
+                    return "Карта \"+4\":\nВы взяли 4 карты и пропустили ход.";
+                default:
+                    return "";
+            }
+        }
+
         internal void NewPlayer(int id, bool ready)
         {
             playersList.Items.Add($"Player{id}{(ready ? " [Готов]" : "")}");
@@ -237,9 +277,12 @@ namespace Client
             if (currentPlayerId >= 0 && playersList.SelectedItems.Count >= 1)
             {
                 var playerId = playersList.SelectedIndex + 1;
-                if (PlayersCardsCount[playerId - 1] == 1)
+                if (playerId != Player.Id && PlayersCardsCount[playerId - 1] == 1)
                     client.QueuePacketSend(XPacketType.PlayerDidntSayUno, new XPacketPlayerDidntSayUno() { PlayerId = playerId });
+                else if (playerId == Player.Id && Player.Cards.Count == 1)
+                    unoButton_Click(sender, e);
             }
+            playersList.ClearSelected();
         }
 
         private void cardsListView_DoubleClick(object sender, EventArgs e)

@@ -124,6 +124,8 @@ namespace TCPServer
             foreach (var client in _clients)
             {
                 if (client.Player.Id == playerId)
+                {
+                    client.QueuePacketSend(XPacketType.PlayerDidntSayUno, new XPacketPlayerDidntSayUno());
                     foreach (var card in newCards)
                     {
                         var addCard = new XPacketAddCardToHand()
@@ -133,6 +135,7 @@ namespace TCPServer
                         };
                         client.QueuePacketSend(XPacketType.AddCardToHand, addCard);
                     }
+                }
                 client.QueuePacketSend(XPacketType.ChangeCardsCount, changeCardsCount);
             }
         }

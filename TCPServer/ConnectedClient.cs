@@ -134,7 +134,7 @@ namespace TCPServer
         {
             var cardPacket = XPacketConverter.Deserialize<XPacketUpdateCardOnTable>(packet);
             var card = new Card((CardType)cardPacket.CardType, (CardColor)cardPacket.CardColor);
-            if (_server.Game != null && _server.Game.TryMove(Player, card, out Dictionary<int, Card[]> newCards, (CardColor)cardPacket.SelectedColor))
+            if (_server.Game != null && _server.Game.TryMove(Player, card, out Dictionary<int, Card[]> newCards, out int skipPlayerId, (CardColor)cardPacket.SelectedColor))
             {
                 var successfulMove = new XPacketSuccessfulMove()
                 {
@@ -143,6 +143,7 @@ namespace TCPServer
                     CardColor = cardPacket.CardColor,
                     NextPlayerId = _server.Game.CurrentPlayerId,
                     SelectedColor = cardPacket.SelectedColor,
+                    SkipPlayerId = skipPlayerId,
                 };
 
                 _server.UpdateCardOnTable(successfulMove, newCards);

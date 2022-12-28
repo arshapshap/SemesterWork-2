@@ -125,6 +125,9 @@ public class XClient
             case XPacketType.Uno:
                 ProcessUno(packet);
                 break;
+            case XPacketType.PlayerDidntSayUno:
+                ProcessPlayerDidntSayUno(packet);
+                break;
             case XPacketType.GameOver:
                 ProcessGameOver(packet);
                 break;
@@ -133,6 +136,16 @@ public class XClient
             default:
                 throw new ArgumentOutOfRangeException();
         }
+    }
+
+    private void ProcessPlayerDidntSayUno(XPacket packet)
+    {
+        var uno = XPacketConverter.Deserialize<XPacketUno>(packet);
+        Form.BeginInvoke(new Action(() =>
+        {
+            var hint = "Вы не успели сказать \"УНО!\".\nВы взяли 2 карты.";
+            Form.ShowHint(hint);
+        }));
     }
 
     private void ProcessUno(XPacket packet)
@@ -178,13 +191,7 @@ public class XClient
         var card = new Card((CardType)move.CardType, (CardColor)move.CardColor);
         Form.BeginInvoke(new Action(() =>
         {
-            Form.FirstMove = false;
-            Form.UpdateCardOnTable(card, (card.Color == CardColor.Black) ? (CardColor)move.SelectedColor : null);
-            if (move.PlayerId == Form.Player.Id)
-                Form.RemoveCardFromHand(card);
-            else
-                Form.DecreaseCardsNumber(move.PlayerId);
-            Form.ChangeCurrentPlayer(move.NextPlayerId);
+            Form.SuccessfulMove(move.PlayerId, move.SkipPlayerId, move.NextPlayerId, card, (CardColor)move.SelectedColor);
         }));
     }
 

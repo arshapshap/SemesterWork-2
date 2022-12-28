@@ -19,5 +19,7 @@ namespace XProtocol.XPackets
         public int SelectedColor; // if CardColor is Black
         [XField(5)]
         public int NextPlayerId;
+        [XField(6)]
+        public int SkipPlayerId; // if CardType is Skip, PlusTwo or PlusFour
     }
 }

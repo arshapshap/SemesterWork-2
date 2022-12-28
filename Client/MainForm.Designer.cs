@@ -43,15 +43,16 @@
             this.errorLabel = new System.Windows.Forms.Label();
             this.saveNameButton = new System.Windows.Forms.Button();
             this.mainGroupBox = new System.Windows.Forms.GroupBox();
+            this.hintLabel = new System.Windows.Forms.Label();
             this.cardOnTablePicture = new System.Windows.Forms.PictureBox();
             this.readyGroupBox = new System.Windows.Forms.GroupBox();
-            this.rulesLabel = new System.Windows.Forms.Label();
             this.unoButton = new System.Windows.Forms.Button();
             this.selectedColorPicture = new System.Windows.Forms.PictureBox();
             this.yourMoveLabel = new System.Windows.Forms.Label();
             this.deckPicture = new System.Windows.Forms.PictureBox();
             this.cardsListView = new System.Windows.Forms.ListView();
             this.cardsList = new System.Windows.Forms.ImageList(this.components);
+            this.rulesLabel = new System.Windows.Forms.Label();
             this.selectColorBox.SuspendLayout();
             this.gameOverBox.SuspendLayout();
             this.mainGroupBox.SuspendLayout();
@@ -195,21 +196,32 @@
             // 
             // mainGroupBox
             // 
+            this.mainGroupBox.Controls.Add(this.hintLabel);
             this.mainGroupBox.Controls.Add(this.cardOnTablePicture);
             this.mainGroupBox.Controls.Add(this.readyGroupBox);
-            this.mainGroupBox.Controls.Add(this.rulesLabel);
             this.mainGroupBox.Controls.Add(this.unoButton);
             this.mainGroupBox.Controls.Add(this.selectedColorPicture);
             this.mainGroupBox.Controls.Add(this.yourMoveLabel);
             this.mainGroupBox.Controls.Add(this.deckPicture);
             this.mainGroupBox.Controls.Add(this.cardsListView);
             this.mainGroupBox.Controls.Add(this.playersList);
+            this.mainGroupBox.Controls.Add(this.rulesLabel);
             this.mainGroupBox.Location = new System.Drawing.Point(12, 2);
             this.mainGroupBox.Name = "mainGroupBox";
             this.mainGroupBox.Size = new System.Drawing.Size(750, 550);
             this.mainGroupBox.TabIndex = 5;
             this.mainGroupBox.TabStop = false;
             this.mainGroupBox.Visible = false;
+            // 
+            // hintLabel
+            // 
+            this.hintLabel.AutoSize = true;
+            this.hintLabel.Location = new System.Drawing.Point(480, 223);
+            this.hintLabel.Name = "hintLabel";
+            this.hintLabel.Size = new System.Drawing.Size(260, 40);
+            this.hintLabel.TabIndex = 13;
+            this.hintLabel.Text = "Карта \"Пропуск хода\":\r\nВы взяли 2 карты и пропустили ход.\r\n";
+            this.hintLabel.Visible = false;
             // 
             // cardOnTablePicture
             // 
@@ -230,17 +242,6 @@
             this.readyGroupBox.Size = new System.Drawing.Size(250, 125);
             this.readyGroupBox.TabIndex = 5;
             this.readyGroupBox.TabStop = false;
-            // 
-            // rulesLabel
-            // 
-            this.rulesLabel.AutoSize = true;
-            this.rulesLabel.Location = new System.Drawing.Point(160, 20);
-            this.rulesLabel.Name = "rulesLabel";
-            this.rulesLabel.Size = new System.Drawing.Size(589, 120);
-            this.rulesLabel.TabIndex = 12;
-            this.rulesLabel.Text = resources.GetString("rulesLabel.Text");
-            this.rulesLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.rulesLabel.Visible = false;
             // 
             // unoButton
             // 
@@ -268,7 +269,7 @@
             // 
             this.yourMoveLabel.AutoSize = true;
             this.yourMoveLabel.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.yourMoveLabel.Location = new System.Drawing.Point(446, 23);
+            this.yourMoveLabel.Location = new System.Drawing.Point(160, 20);
             this.yourMoveLabel.Name = "yourMoveLabel";
             this.yourMoveLabel.Size = new System.Drawing.Size(139, 41);
             this.yourMoveLabel.TabIndex = 9;
@@ -305,6 +306,17 @@
             this.cardsList.ColorDepth = System.Windows.Forms.ColorDepth.Depth8Bit;
             this.cardsList.ImageSize = new System.Drawing.Size(64, 96);
             this.cardsList.TransparentColor = System.Drawing.Color.Transparent;
+            // 
+            // rulesLabel
+            // 
+            this.rulesLabel.AutoSize = true;
+            this.rulesLabel.Location = new System.Drawing.Point(160, 20);
+            this.rulesLabel.Name = "rulesLabel";
+            this.rulesLabel.Size = new System.Drawing.Size(589, 120);
+            this.rulesLabel.TabIndex = 12;
+            this.rulesLabel.Text = resources.GetString("rulesLabel.Text");
+            this.rulesLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.rulesLabel.Visible = false;
             // 
             // MainForm
             // 
@@ -361,5 +373,6 @@
         private Label winnerLabel;
         private Button unoButton;
         private Label rulesLabel;
+        private Label hintLabel;
     }
 }

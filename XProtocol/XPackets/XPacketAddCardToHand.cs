@@ -13,5 +13,7 @@ namespace XProtocol.XPackets
         public int CardType;
         [XField(2)]
         public int CardColor;
+        [XField(3)]
+        public int Reason;
     }
 }

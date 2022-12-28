@@ -51,9 +51,10 @@ namespace GameLogic
             CurrentPlayerId = Players[rng.Next(Players.Length)].Id;
         }
 
-        public bool TryMove(Player player, Card card, out Dictionary<int, Card[]> newCards, CardColor? selectedColor = null)
+        public bool TryMove(Player player, Card card, out Dictionary<int, Card[]> newCards, out int skipPlayerId, CardColor? selectedColor = null)
         {
             newCards = new Dictionary<int, Card[]>();
+            skipPlayerId = -1;
             if (!CheckMoveCorrect(card) && !CheckMoveInterception(card))
                 return false;
             else if (CheckMoveInterception(card))
@@ -70,20 +71,27 @@ namespace GameLogic
                 return true;
             }
 
-            if (card.Type == CardType.Skip)
-                NextPlayer();
-            else if (card.Type == CardType.Reverse)
-                Reversed = !Reversed;
-            else if (card.Type == CardType.PlusTwo)
+            switch (card.Type)
             {
-                NextPlayer();
-                newCards[CurrentPlayerId] = AddCards(CurrentPlayerId, 2);
+                case CardType.Skip:
+                    NextPlayer();
+                    skipPlayerId = CurrentPlayerId;
+                    break;
+                case CardType.Reverse:
+                    Reversed = !Reversed;
+                    break;
+                case CardType.PlusTwo:
+                    NextPlayer();
+                    skipPlayerId = CurrentPlayerId;
+                    newCards[CurrentPlayerId] = AddCards(CurrentPlayerId, 2);
+                    break;
+                case CardType.PlusFour:
+                    NextPlayer();
+                    skipPlayerId = CurrentPlayerId;
+                    newCards[CurrentPlayerId] = AddCards(CurrentPlayerId, 4);
+                    break;
             }
-            else if (card.Type == CardType.PlusFour)
-            {
-                NextPlayer();
-                newCards[CurrentPlayerId] = AddCards(CurrentPlayerId, 4);
-            }
+
             NextPlayer();
             return true;
         }
