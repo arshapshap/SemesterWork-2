@@ -5,6 +5,8 @@ using XProtocol.XPackets;
 using GameLogic.Cards;
 using System.Numerics;
 using System.Windows.Forms;
+using System.ComponentModel;
+using System.Reflection;
 
 namespace Client
 {
@@ -15,7 +17,6 @@ namespace Client
         public Player Player { get; internal set; }
         internal int[] PlayersCardsCount { get; private set; }
         internal bool[] PlayersUno { get; private set; }
-
         internal bool FirstMove { get; set; } = true;
         XClient client;
         Card cardOnTable;
@@ -23,6 +24,7 @@ namespace Client
         int currentPlayerId = -1;
         Card selectedCard;
         bool IsMoveAvailable = true;
+        Hint currentHint = Hint.No;
 
         public MainForm()
         {
@@ -39,55 +41,23 @@ namespace Client
 
         }
 
-        internal void UpdateCardOnTable(Card card, CardColor? selectedColor = null)
+        #region Методы для работы с игровой логикой
+
+        private void ChangeCurrentPlayer(int id)
         {
-            selectedCardOnTableColor = selectedColor;
+            var previousPlayer = currentPlayerId;
+            currentPlayerId = id;
 
-            cardOnTable = card;
-            var cardFileName = Card.ToString(card);
-            cardOnTablePicture.Image = Image.FromFile(imagesPath + @$"\{cardFileName}.png");
+            if (previousPlayer != -1)
+                UpdatePlayerInfo(previousPlayer);
+            UpdatePlayerInfo(id);
+            yourMoveLabel.Visible = id == Player.Id;
 
-            ChangeSelectedColor(selectedColor);
-            HideSelectColorBox();
+            if (currentPlayerId == Player.Id && Player.Cards.Count > 0)
+                CheckMoveAvailable();
         }
 
-        private void CheckMoveAvailable()
-        {
-            IsMoveAvailable = Player.Cards.Any(c => Game.CheckMoveCorrect(cardOnTable, c, selectedCardOnTableColor));
-            if (!IsMoveAvailable)
-                deckPicture.Cursor = Cursors.Hand;
-            else
-                deckPicture.Cursor = Cursors.No;
-        }
-
-        private void ChangeSelectedColor(CardColor? selectedColor)
-        {
-            if (selectedColor == null)
-                selectedColorPicture.Visible = false;
-            else
-            {
-                selectedColorPicture.Visible = true;
-                selectedColorPicture.BringToFront();
-                switch (selectedColor)
-                {
-                    case CardColor.Red:
-                        selectedColorPicture.BackColor = RedColor;
-                        break;
-                    case CardColor.Yellow:
-                        selectedColorPicture.BackColor = YellowColor;
-                        break;
-                    case CardColor.Green:
-                        selectedColorPicture.BackColor = GreenColor;
-                        break;
-                    case CardColor.Blue:
-                        selectedColorPicture.BackColor = BlueColor;
-                        break;
-                }
-            }
-            
-        }
-
-        internal void RemoveCardFromHand(Card card)
+        private void RemoveCardFromHand(Card card)
         {
             Player.TakeCard(card);
             SortCardsInHand();
@@ -96,50 +66,23 @@ namespace Client
             unoButton.Visible = Player.Cards.Count == 1;
         }
 
-        internal void DecreaseCardsNumber(int playerId)
+        private void DecreaseCardsNumber(int playerId)
         {
             PlayersCardsCount[playerId - 1]--;
             UpdatePlayerInfo(playerId);
         }
 
-        internal void UpdatePlayerInfo(int playerId)
+        private void UpdatePlayerInfo(int playerId)
         {
             var playerInfo = $"{((currentPlayerId == playerId) ? ">>> " : "")}Player{playerId}";
             playerInfo += PlayersUno[playerId - 1] ? $" [УНО]" : $" [{PlayersCardsCount[playerId - 1]} карт]";
             playersList.Items[playerId - 1] = playerInfo;
+
+            //if (playerId != Player.Id && PlayersCardsCount[playerId - 1] == 1 && !PlayersUno[playerId - 1])
+            //    ShowHint($"Player{playerId} не сказал \"УНО!\"");
         }
 
-        internal void Uno(int playerId)
-        {
-            PlayersUno[playerId - 1] = true;
-            UpdatePlayerInfo(playerId);
-        }
-
-        internal void ShowHint(string hint)
-        {
-            hintLabel.Text = hint;
-            hintLabel.Visible = true;
-        }
-
-        internal void HideHint() 
-            => hintLabel.Visible = false;
-
-        internal void ChangeCardsCount(int playerId, int cardsCount)
-        {
-            PlayersCardsCount[playerId - 1] = cardsCount;
-            PlayersUno[playerId - 1] = false;
-            UpdatePlayerInfo(playerId);
-        }
-
-        internal void AddCardToHand(Card card)
-        {
-            Player.AddCard(card);
-            SortCardsInHand();
-
-            unoButton.Visible = Player.Cards.Count == 1;
-        }
-
-        internal void SortCardsInHand()
+        private void SortCardsInHand()
         {
             cardsListView.Clear();
             foreach (var card in Player.Cards)
@@ -151,31 +94,21 @@ namespace Client
             }
         }
 
-        internal void GameStart(Card lastCard, Card[] cards)
+        private void CheckMoveAvailable()
         {
-            readyGroupBox.Dispose();
-            rulesLabel.Dispose();
-            cardsListView.Visible = true;
-            cardOnTablePicture.Visible = true;
-            deckPicture.Visible = true;
-
-            PlayersCardsCount = new int[playersList.Items.Count];
-            PlayersUno = new bool[playersList.Items.Count];
-            for (int id = 1; id <= playersList.Items.Count; id++)
+            IsMoveAvailable = Player.Cards.Any(c => Game.CheckMoveCorrect(cardOnTable, c, selectedCardOnTableColor));
+            if (!IsMoveAvailable && (FirstMove && Player.Cards.Count >= 7 || !FirstMove))
             {
-                PlayersCardsCount[id - 1] = 7;
-                UpdatePlayerInfo(id);
-            }    
-
-            foreach (var card in cards)
-                AddCardToHand(card);
-            UpdateCardOnTable(lastCard);
+                ShowHint(Hint.NoCards);
+                deckPicture.Cursor = Cursors.Hand;
+            }
+            else
+                deckPicture.Cursor = Cursors.No;
         }
 
-        internal void PlayerReady(int id)
-        {
-            playersList.Items[id - 1] = $"Player{id} [Готов]";
-        }
+        #endregion
+
+        #region Обработка событий на сервере
 
         internal void Handshake(int id, bool alreadyStarted)
         {
@@ -198,6 +131,65 @@ namespace Client
             }
         }
 
+        internal void NewPlayer(int id, bool ready)
+        {
+            playersList.Items.Add($"Player{id}{(ready ? " [Готов]" : "")}");
+        }
+
+        internal void PlayerReady(int id)
+        {
+            playersList.Items[id - 1] = $"Player{id} [Готов]";
+        }
+
+        internal void GameStart(Card lastCard, int currentPlayerId)
+        {
+            readyGroupBox.Dispose();
+            rulesLabel.Dispose();
+            cardsListView.Visible = true;
+            cardOnTablePicture.Visible = true;
+            deckPicture.Visible = true;
+
+            PlayersCardsCount = new int[playersList.Items.Count];
+            PlayersUno = new bool[playersList.Items.Count];
+            for (int id = 1; id <= playersList.Items.Count; id++)
+            {
+                PlayersCardsCount[id - 1] = 7;
+                UpdatePlayerInfo(id);
+            }
+
+            UpdateCardOnTable(lastCard);
+            ChangeCurrentPlayer(currentPlayerId);
+        }
+
+        internal void UpdateCardOnTable(Card card, CardColor? selectedColor = null)
+        {
+            selectedCardOnTableColor = selectedColor;
+
+            cardOnTable = card;
+            var cardFileName = Card.ToString(card);
+            cardOnTablePicture.Image = Image.FromFile(imagesPath + @$"\{cardFileName}.png");
+
+            ChangeSelectedColor(selectedColor);
+            HideSelectColorBox();
+        }
+
+        internal void AddCardToHand(Card card)
+        {
+            Player.AddCard(card);
+            SortCardsInHand();
+
+            unoButton.Visible = !FirstMove && Player.Cards.Count == 1;
+            if (FirstMove && currentHint != Hint.NoCards && currentPlayerId == Player.Id)
+                CheckMoveAvailable();
+        }
+
+        internal void ChangeCardsCount(int playerId, int cardsCount)
+        {
+            PlayersCardsCount[playerId - 1] = cardsCount;
+            PlayersUno[playerId - 1] = false;
+            UpdatePlayerInfo(playerId);
+        }
+
         internal void SuccessfulMove(int playerId, int skipPlayerId, int nextPlayerId, Card card, CardColor selectedColor)
         {
             HideHint();
@@ -210,42 +202,55 @@ namespace Client
             ChangeCurrentPlayer(nextPlayerId);
 
             if (Player.Id == skipPlayerId)
-                ShowHint(GetHint(card.Type));
-        }
-
-        private string GetHint(CardType cardType)
-        {
-            switch (cardType)
             {
-                case CardType.Skip:
-                    return "Карта \"Пропуск хода\":\nВы пропустили ход.";
-                case CardType.PlusTwo:
-                    return "Карта \"+2\":\nВы взяли 2 карты и пропустили ход.";
-                case CardType.PlusFour:
-                    return "Карта \"+4\":\nВы взяли 4 карты и пропустили ход.";
-                default:
-                    return "";
+                switch (card.Type)
+                {
+                    case CardType.Skip:
+                        ShowHint(Hint.Skip);
+                        break;
+                    case CardType.PlusTwo:
+                        ShowHint(Hint.PlusTwo);
+                        break;
+                    case CardType.PlusFour:
+                        ShowHint(Hint.PlusFour);
+                        break;
+                }
             }
         }
 
-        internal void NewPlayer(int id, bool ready)
+        internal void SkipMove(int skipPlayerId, int nextPlayerId)
         {
-            playersList.Items.Add($"Player{id}{(ready ? " [Готов]" : "")}");
+            if (skipPlayerId == Player.Id)
+                ShowHint(Hint.NoCardsSkip);
+            ChangeCurrentPlayer(nextPlayerId);
         }
 
-        internal void ChangeCurrentPlayer(int id)
+        internal void Uno(int playerId)
         {
-            var previousPlayer = currentPlayerId;
-            currentPlayerId = id;
-
-            if (previousPlayer != -1)
-                UpdatePlayerInfo(previousPlayer);
-            UpdatePlayerInfo(id);
-            yourMoveLabel.Visible = id == Player.Id;
-
-            if (currentPlayerId == Player.Id)
-                CheckMoveAvailable();
+            PlayersUno[playerId - 1] = true;
+            UpdatePlayerInfo(playerId);
         }
+
+        internal void PlayerDidntSayUno()
+        {
+            ShowHint(Hint.DidntSayUno);
+        }
+
+        internal void GameOver(int winnerId)
+        {
+            HideSelectColorBox();
+
+            winnerLabel.Text = $"Победитель: Player{winnerId}";
+            mainGroupBox.Enabled = false;
+            gameOverBox.Visible = true;
+            gameOverBox.Enabled = true;
+            gameOverBox.BringToFront();
+            winnerLabel.BringToFront();
+        }
+
+        #endregion
+
+        #region Обработка событий формы
 
         private void readyButton_Click(object sender, EventArgs e)
         {
@@ -289,6 +294,9 @@ namespace Client
         {
             if (cardsListView.SelectedItems.Count >= 1)
             {
+                if (currentHint == Hint.PlusFourUnavailable)
+                    HideHint();
+
                 ListViewItem item = cardsListView.SelectedItems[0];
                 var card = Card.FromString(item.ImageKey);
 
@@ -303,12 +311,17 @@ namespace Client
                     });
                 else if (isMoveAvailable && card.Color == CardColor.Black)
                 {
-                    selectedCard = card;
+                    if (card.Type == CardType.PlusFour && Player.Cards
+                        .Any(c
+                        => (c.Color == cardOnTable.Color && cardOnTable.Color != CardColor.Black)
+                        || (c.Color == selectedCardOnTableColor && cardOnTable.Color == CardColor.Black)))
+                    {
+                        ShowHint(Hint.PlusFourUnavailable);
+                        return;
+                    }
 
-                    mainGroupBox.Enabled = false;
-                    selectColorBox.Visible = true;
-                    selectColorBox.Enabled = true;
-                    selectColorBox.BringToFront();
+                    selectedCard = card;
+                    ShowSelectColorBox();
                 }
             }
         }
@@ -322,6 +335,8 @@ namespace Client
         {
             if (currentPlayerId == Player.Id && !IsMoveAvailable)
             {
+                if (currentHint == Hint.NoCards)
+                    HideHint();
                 deckPicture.Cursor = Cursors.No;
                 client.QueuePacketSend(XPacketType.AddCardToHand, new XPacketAddCardToHand());
             }
@@ -371,16 +386,57 @@ namespace Client
             HideSelectColorBox();
         }
 
-        internal void GameOver(int winnerId)
-        {
-            HideSelectColorBox();
+        #endregion
 
-            winnerLabel.Text = $"Победитель: Player{winnerId}";
+        #region Вспомогательные методы для отображения элементов
+
+        enum Hint
+        {
+            [Description("Карта \"Пропуск хода\":\nВы пропустили ход.")]
+            Skip,
+            [Description("Карта \"+2\":\nВы взяли 2 карты и пропустили ход.")]
+            PlusTwo,
+            [Description("Карта \"+4\":\nВы взяли 4 карты и пропустили ход.")]
+            PlusFour,
+            [Description("Вы не успели сказать \"УНО!\".\nВы взяли 2 карты.")]
+            DidntSayUno,
+            [Description("Вам нечем ходить.\nВозьмите карту из колоды.")]
+            NoCards,
+            [Description("Вам нечем ходить.\nВы пропустили ход.")]
+            NoCardsSkip,
+            [Description("Карту \"+4\" можно использовать,\nтолько если у Вас нет текущего цвета.")]
+            PlusFourUnavailable,
+            [Description("")]
+            No
+        }
+
+        private string GetDescription(Hint hint)
+        {
+            Type type = typeof(Hint);
+            string name = Enum.GetName(type, hint);
+            if (name != null)
+            {
+                FieldInfo field = type.GetField(name);
+                if (field != null)
+                {
+                    DescriptionAttribute attr =
+                           Attribute.GetCustomAttribute(field,
+                             typeof(DescriptionAttribute)) as DescriptionAttribute;
+                    if (attr != null)
+                    {
+                        return attr.Description;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private void ShowSelectColorBox()
+        {
             mainGroupBox.Enabled = false;
-            gameOverBox.Visible = true;
-            gameOverBox.Enabled = true;
-            gameOverBox.BringToFront();
-            winnerLabel.BringToFront();
+            selectColorBox.Visible = true;
+            selectColorBox.Enabled = true;
+            selectColorBox.BringToFront();
         }
 
         private void HideSelectColorBox()
@@ -389,5 +445,46 @@ namespace Client
             selectColorBox.Enabled = false;
             mainGroupBox.Enabled = true;
         }
+
+        private void ShowHint(Hint hint)
+        {
+            currentHint = hint;
+            hintLabel.Text = GetDescription(hint);
+            hintLabel.Visible = true;
+        }
+
+        private void HideHint()
+        {
+            currentHint = Hint.No;
+            hintLabel.Visible = false;
+        }
+
+        private void ChangeSelectedColor(CardColor? selectedColor)
+        {
+            if (selectedColor == null)
+                selectedColorPicture.Visible = false;
+            else
+            {
+                selectedColorPicture.Visible = true;
+                selectedColorPicture.BringToFront();
+                switch (selectedColor)
+                {
+                    case CardColor.Red:
+                        selectedColorPicture.BackColor = RedColor;
+                        break;
+                    case CardColor.Yellow:
+                        selectedColorPicture.BackColor = YellowColor;
+                        break;
+                    case CardColor.Green:
+                        selectedColorPicture.BackColor = GreenColor;
+                        break;
+                    case CardColor.Blue:
+                        selectedColorPicture.BackColor = BlueColor;
+                        break;
+                }
+            }
+
+        }
+        #endregion
     }
 }

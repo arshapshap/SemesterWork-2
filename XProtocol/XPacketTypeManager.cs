@@ -14,14 +14,13 @@ namespace XProtocol
             RegisterType(XPacketType.NewPlayer, 1, 1);
             RegisterType(XPacketType.PlayerReady, 1, 2);
             RegisterType(XPacketType.GameStart, 1, 3);
-            RegisterType(XPacketType.CurrentPlayer, 2, 0);
-            RegisterType(XPacketType.UpdateCardOnTable, 2, 1);
-            RegisterType(XPacketType.AddCardToHand, 2, 2);
-            RegisterType(XPacketType.ChangeCardsCount, 2, 3);
-            RegisterType(XPacketType.SuccessfulMove, 2, 4);
-            RegisterType(XPacketType.SkipMove, 2, 5);
-            RegisterType(XPacketType.Uno, 2, 6);
-            RegisterType(XPacketType.PlayerDidntSayUno, 2, 7);
+            RegisterType(XPacketType.UpdateCardOnTable, 2, 0);
+            RegisterType(XPacketType.AddCardToHand, 2, 1);
+            RegisterType(XPacketType.ChangeCardsCount, 2, 2);
+            RegisterType(XPacketType.SuccessfulMove, 2, 3);
+            RegisterType(XPacketType.SkipMove, 2, 4);
+            RegisterType(XPacketType.Uno, 2, 5);
+            RegisterType(XPacketType.PlayerDidntSayUno, 2, 6);
             RegisterType(XPacketType.GameOver, 3, 0);
         }
 

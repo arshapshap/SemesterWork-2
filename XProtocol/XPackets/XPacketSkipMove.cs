@@ -11,5 +11,7 @@ namespace XProtocol.XPackets
     {
         [XField(1)]
         public int NextPlayerId;
+        [XField(2)]
+        public int SkipPlayerId;
     }
 }

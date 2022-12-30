@@ -175,7 +175,7 @@
             // 
             this.errorLabel.AutoSize = true;
             this.errorLabel.ForeColor = System.Drawing.Color.Brown;
-            this.errorLabel.Location = new System.Drawing.Point(392, 245);
+            this.errorLabel.Location = new System.Drawing.Point(264, 205);
             this.errorLabel.Name = "errorLabel";
             this.errorLabel.Size = new System.Drawing.Size(261, 20);
             this.errorLabel.TabIndex = 3;
@@ -208,7 +208,7 @@
             this.mainGroupBox.Controls.Add(this.rulesLabel);
             this.mainGroupBox.Location = new System.Drawing.Point(12, 2);
             this.mainGroupBox.Name = "mainGroupBox";
-            this.mainGroupBox.Size = new System.Drawing.Size(750, 550);
+            this.mainGroupBox.Size = new System.Drawing.Size(750, 549);
             this.mainGroupBox.TabIndex = 5;
             this.mainGroupBox.TabStop = false;
             this.mainGroupBox.Visible = false;
@@ -312,11 +312,11 @@
             this.rulesLabel.AutoSize = true;
             this.rulesLabel.Location = new System.Drawing.Point(160, 20);
             this.rulesLabel.Name = "rulesLabel";
-            this.rulesLabel.Size = new System.Drawing.Size(589, 120);
+            this.rulesLabel.Size = new System.Drawing.Size(477, 60);
             this.rulesLabel.TabIndex = 12;
-            this.rulesLabel.Text = resources.GetString("rulesLabel.Text");
+            this.rulesLabel.Text = "Подсказка:\r\nЕсли Вы заметили игрока с 1 картой, не сказавшего \"УНО!\",\r\nдважды кли" +
+    "кните по его имени в списке, чтобы сообщить об этом.\r\n";
             this.rulesLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.rulesLabel.Visible = false;
             // 
             // MainForm
             // 

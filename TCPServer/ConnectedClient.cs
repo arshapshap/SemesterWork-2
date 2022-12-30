@@ -32,6 +32,42 @@ namespace TCPServer
             Task.Run((Action) SendPackets);
         }
 
+        #region Отправка пакетов
+
+        internal void QueuePacketSend(XPacketType packetType, object packet)
+        {
+            var bytes = XPacketConverter.Serialize(packetType, packet).ToPacket();
+            Console.WriteLine($"Sent {packetType}Packet to {(IPEndPoint)client.RemoteEndPoint}");
+
+            if (bytes.Length > 256)
+            {
+                throw new Exception("Max packet size is 256 bytes.");
+            }
+
+            _packetSendingQueue.Enqueue(bytes);
+        }
+
+        private void SendPackets()
+        {
+            while (true)
+            {
+                if (_packetSendingQueue.Count == 0)
+                {
+                    Thread.Sleep(100);
+                    continue;
+                }
+
+                var packet = _packetSendingQueue.Dequeue();
+                client.Send(packet);
+
+                Thread.Sleep(100);
+            }
+        }
+
+        #endregion
+
+        #region Принятие пакетов
+
         private void ProcessIncomingPackets()
         {
             while (true) // Слушаем пакеты, пока клиент не отключится.
@@ -86,82 +122,9 @@ namespace TCPServer
             }
         }
 
-        private void ProcessPlayerDidntSayUno(XPacket packet)
-        {
-            var playerPacket = XPacketConverter.Deserialize<XPacketPlayerDidntSayUno>(packet);
-            var playerId = playerPacket.PlayerId;
-            if (!_server.Game.Players[playerId - 1].Uno)
-                _server.UnoPenalty(playerId);
-        }
+        #endregion
 
-        private void ProcessUno(XPacket packet)
-        {
-            Player.Uno = true;
-            _server.SendToAllClients(XPacketType.Uno, new XPacketUno() { PlayerId = Player.Id });
-        }
-
-        private void ProcessAddCardToHand(XPacket packet)
-        {
-            if (_server.Game != null && _server.Game.TryTakeCardFromDeck(Player, out Card card)) 
-            {
-                var addCard = new XPacketAddCardToHand()
-                {
-                    CardType = (int)card.Type,
-                    CardColor = (int)card.Color,
-                };
-                QueuePacketSend(XPacketType.AddCardToHand, addCard);
-
-                var changeCardsCount = new XPacketChangeCardsCount()
-                {
-                    PlayerId = Player.Id,
-                    CardsCount = Player.Cards.Count
-                };
-
-                _server.SendToAllClients(XPacketType.ChangeCardsCount, changeCardsCount);
-
-                if (!_server.Game.CheckMoveCorrect(card))
-                {
-                    var skipMove = new XPacketSkipMove()
-                    {
-                        NextPlayerId = _server.Game.NextPlayer()
-                    };
-                    _server.SendToAllClients(XPacketType.SkipMove, skipMove);
-                }
-            }
-        }
-
-        private void ProcessUpdateCardOnTable(XPacket packet)
-        {
-            var cardPacket = XPacketConverter.Deserialize<XPacketUpdateCardOnTable>(packet);
-            var card = new Card((CardType)cardPacket.CardType, (CardColor)cardPacket.CardColor);
-            if (_server.Game != null && _server.Game.TryMove(Player, card, out Dictionary<int, Card[]> newCards, out int skipPlayerId, (CardColor)cardPacket.SelectedColor))
-            {
-                var successfulMove = new XPacketSuccessfulMove()
-                {
-                    PlayerId = Player.Id,
-                    CardType = cardPacket.CardType,
-                    CardColor = cardPacket.CardColor,
-                    NextPlayerId = _server.Game.CurrentPlayerId,
-                    SelectedColor = cardPacket.SelectedColor,
-                    SkipPlayerId = skipPlayerId,
-                };
-
-                _server.UpdateCardOnTable(successfulMove, newCards);
-            }
-        }
-
-        private void ProcessPlayerReady(XPacket packet)
-        {
-            Player.Ready = true;
-
-            var playerReady = new XPacketPlayerReady()
-            {
-                Id = Player.Id
-            };
-
-            _server.SendToAllClients(XPacketType.PlayerReady, playerReady);
-            _server.StartGameIfAllReady();
-        }
+        #region Обработка пакетов
 
         private void ProcessHandshake(XPacket packet)
         {
@@ -185,43 +148,94 @@ namespace TCPServer
                 foreach (var client in _server._clients)
                 {
                     if (client.Player.Id != Player.Id)
-                        QueuePacketSend(XPacketType.NewPlayer, new XPacketNewPlayer() { 
-                            Id = client.Player.Id, 
-                            Ready = client.Player.Ready 
+                        QueuePacketSend(XPacketType.NewPlayer, new XPacketNewPlayer()
+                        {
+                            Id = client.Player.Id,
+                            Ready = client.Player.Ready
                         });
                     client.QueuePacketSend(XPacketType.NewPlayer, newPlayer);
                 }
             }
         }
 
-        internal void QueuePacketSend(XPacketType packetType, object packet)
+        private void ProcessPlayerReady(XPacket packet)
         {
-            var bytes = XPacketConverter.Serialize(packetType, packet).ToPacket();
-            Console.WriteLine($"Sent {packetType}Packet to {(IPEndPoint)client.RemoteEndPoint}");
+            Player.Ready = true;
 
-            if (bytes.Length > 256)
+            var playerReady = new XPacketPlayerReady()
             {
-                throw new Exception("Max packet size is 256 bytes.");
-            }
+                Id = Player.Id
+            };
 
-            _packetSendingQueue.Enqueue(bytes);
+            _server.SendToAllClients(XPacketType.PlayerReady, playerReady);
+            _server.StartGameIfAllReady();
         }
 
-        private void SendPackets()
+        private void ProcessUpdateCardOnTable(XPacket packet)
         {
-            while (true)
+            var cardPacket = XPacketConverter.Deserialize<XPacketUpdateCardOnTable>(packet);
+            var card = new Card((CardType)cardPacket.CardType, (CardColor)cardPacket.CardColor);
+            if (_server.Game != null && _server.Game.TryMove(Player, card, out Dictionary<int, Card[]> newCards, out int skipPlayerId, (CardColor)cardPacket.SelectedColor))
             {
-                if (_packetSendingQueue.Count == 0)
+                var successfulMove = new XPacketSuccessfulMove()
                 {
-                    Thread.Sleep(100);
-                    continue;
-                }
+                    PlayerId = Player.Id,
+                    CardType = cardPacket.CardType,
+                    CardColor = cardPacket.CardColor,
+                    NextPlayerId = _server.Game.CurrentPlayerId,
+                    SelectedColor = cardPacket.SelectedColor,
+                    SkipPlayerId = skipPlayerId,
+                };
 
-                var packet = _packetSendingQueue.Dequeue();
-                client.Send(packet);
-
-                Thread.Sleep(100);
+                _server.UpdateCardOnTable(successfulMove, newCards);
             }
         }
+
+        private void ProcessAddCardToHand(XPacket packet)
+        {
+            if (_server.Game != null && _server.Game.TryTakeCardFromDeck(Player, out Card card))
+            {
+                var addCard = new XPacketAddCardToHand()
+                {
+                    CardType = (int)card.Type,
+                    CardColor = (int)card.Color,
+                };
+                QueuePacketSend(XPacketType.AddCardToHand, addCard);
+
+                var changeCardsCount = new XPacketChangeCardsCount()
+                {
+                    PlayerId = Player.Id,
+                    CardsCount = Player.Cards.Count
+                };
+
+                _server.SendToAllClients(XPacketType.ChangeCardsCount, changeCardsCount);
+
+                if (!_server.Game.CheckMoveCorrect(card))
+                {
+                    var skipMove = new XPacketSkipMove()
+                    {
+                        SkipPlayerId = _server.Game.CurrentPlayerId,
+                        NextPlayerId = _server.Game.NextPlayer(),
+                    };
+                    _server.SendToAllClients(XPacketType.SkipMove, skipMove);
+                }
+            }
+        }
+
+        private void ProcessUno(XPacket packet)
+        {
+            Player.Uno = true;
+            _server.SendToAllClients(XPacketType.Uno, new XPacketUno() { PlayerId = Player.Id });
+        }
+
+        private void ProcessPlayerDidntSayUno(XPacket packet)
+        {
+            var playerPacket = XPacketConverter.Deserialize<XPacketPlayerDidntSayUno>(packet);
+            var playerId = playerPacket.PlayerId;
+            if (!_server.Game.Players[playerId - 1].Uno)
+                _server.UnoPenalty(playerId);
+        }
+
+        #endregion
     }
 }

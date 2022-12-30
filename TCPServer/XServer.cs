@@ -75,6 +75,8 @@ namespace TCPServer
             }
         }
 
+        #region Методы для работы с игровой логикой
+
         internal void StartGameIfAllReady()
         {
             if (_clients.Count > 1 && _clients.All(c => c.Player.Ready) && Game == null)
@@ -85,30 +87,22 @@ namespace TCPServer
                 {
                     var gameStart = new XPacketGameStart()
                     {
+                        CurrentPlayerId = Game.CurrentPlayerId,
                         CardOnTableType = (int)Game.CardOnTable.Type,
                         CardOnTableColor = (int)Game.CardOnTable.Color,
-                        Card1Type = (int)client.Player.Cards[0].Type,
-                        Card1Color = (int)client.Player.Cards[0].Color,
-                        Card2Type = (int)client.Player.Cards[1].Type,
-                        Card2Color = (int)client.Player.Cards[1].Color,
-                        Card3Type = (int)client.Player.Cards[2].Type,
-                        Card3Color = (int)client.Player.Cards[2].Color,
-                        Card4Type = (int)client.Player.Cards[3].Type,
-                        Card4Color = (int)client.Player.Cards[3].Color,
-                        Card5Type = (int)client.Player.Cards[4].Type,
-                        Card5Color = (int)client.Player.Cards[4].Color,
-                        Card6Type = (int)client.Player.Cards[5].Type,
-                        Card6Color = (int)client.Player.Cards[5].Color,
-                        Card7Type = (int)client.Player.Cards[6].Type,
-                        Card7Color = (int)client.Player.Cards[6].Color,
-                    };
-                    var currentPlayer = new XPacketCurrentPlayer()
-                    {
-                        Id = Game.CurrentPlayerId
                     };
 
                     client.QueuePacketSend(XPacketType.GameStart, gameStart);
-                    client.QueuePacketSend(XPacketType.CurrentPlayer, currentPlayer);
+
+                    foreach (var card in client.Player.Cards)
+                    {
+                        var addCard = new XPacketAddCardToHand()
+                        {
+                            CardType = (int)card.Type,
+                            CardColor = (int)card.Color,
+                        };
+                        client.QueuePacketSend(XPacketType.AddCardToHand, addCard);
+                    }
                 };
             }
         }
@@ -173,6 +167,8 @@ namespace TCPServer
                 }
             }
         }
+
+        #endregion
 
         internal void SendToAllClients(XPacketType packetType, object packet)
         {

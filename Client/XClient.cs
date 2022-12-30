@@ -47,6 +47,8 @@ public class XClient
         Task.Run((Action) SendPackets);
     }
 
+    #region Отправка пакетов
+
     internal void QueuePacketSend(XPacketType packetType, object packet)
     {
         var bytes = XPacketConverter.Serialize(packetType, packet).ToPacket();
@@ -59,6 +61,26 @@ public class XClient
         _packetSendingQueue.Enqueue(bytes);
     }
 
+    private async void SendPackets()
+    {
+        while (true)
+        {
+            if (_packetSendingQueue.Count == 0)
+            {
+                Thread.Sleep(100);
+                continue;
+            }
+
+            var packet = _packetSendingQueue.Dequeue();
+            _socket.Send(packet);
+
+            Thread.Sleep(100);
+        }
+    }
+
+    #endregion
+
+    #region Принятие пакетов
     private void RecievePackets()
     {
         while (true)
@@ -104,9 +126,6 @@ public class XClient
             case XPacketType.GameStart:
                 ProcessGameStart(packet);
                 break;
-            case XPacketType.CurrentPlayer:
-                ProcessCurrentPlayer(packet);
-                break;
             case XPacketType.UpdateCardOnTable:
                 ProcessUpdateCardOnTable(packet);
                 break;
@@ -138,41 +157,68 @@ public class XClient
         }
     }
 
-    private void ProcessPlayerDidntSayUno(XPacket packet)
+    #endregion
+
+    #region Обработка пакетов
+
+    private void ProcessHandshake(XPacket packet)
     {
-        var uno = XPacketConverter.Deserialize<XPacketUno>(packet);
+        var handshake = XPacketConverter.Deserialize<XPacketHandshake>(packet);
+
         Form.BeginInvoke(new Action(() =>
         {
-            var hint = "Вы не успели сказать \"УНО!\".\nВы взяли 2 карты.";
-            Form.ShowHint(hint);
+            Form.Handshake(handshake.Id, handshake.AlreadyStarted);
         }));
     }
 
-    private void ProcessUno(XPacket packet)
+    private void ProcessNewPlayer(XPacket packet)
     {
-        var uno = XPacketConverter.Deserialize<XPacketUno>(packet);
+        var newPlayer = XPacketConverter.Deserialize<XPacketNewPlayer>(packet);
         Form.BeginInvoke(new Action(() =>
         {
-            Form.Uno(uno.PlayerId);
+            Form.NewPlayer(newPlayer.Id, newPlayer.Ready);
         }));
     }
 
-    private void ProcessGameOver(XPacket packet)
+    private void ProcessPlayerReady(XPacket packet)
     {
-        var gameOver = XPacketConverter.Deserialize<XPacketGameOver>(packet);
+        var player = XPacketConverter.Deserialize<XPacketPlayerReady>(packet);
         Form.BeginInvoke(new Action(() =>
         {
-            Form.GameOver(gameOver.WinnerId);
+            Form.PlayerReady(player.Id);
         }));
-
     }
 
-    private void ProcessSkipMove(XPacket packet)
+    private void ProcessGameStart(XPacket packet)
     {
-        var move = XPacketConverter.Deserialize<XPacketSkipMove>(packet);
+        var gameStart = XPacketConverter.Deserialize<XPacketGameStart>(packet);
+        var cardOnTable = new Card((CardType)gameStart.CardOnTableType, (CardColor)gameStart.CardOnTableColor);
+
         Form.BeginInvoke(new Action(() =>
         {
-            Form.ChangeCurrentPlayer(move.NextPlayerId);
+            Form.GameStart(cardOnTable, gameStart.CurrentPlayerId);
+        }));
+    }
+
+    private void ProcessUpdateCardOnTable(XPacket packet)
+    {
+        var cardPacket = XPacketConverter.Deserialize<XPacketUpdateCardOnTable>(packet);
+        var card = new Card((CardType)cardPacket.CardType, (CardColor)cardPacket.CardColor);
+
+        Form.BeginInvoke(new Action(() =>
+        {
+            Form.UpdateCardOnTable(card);
+        }));
+    }
+
+    private void ProcessAddCardToHand(XPacket packet)
+    {
+        var cardPacket = XPacketConverter.Deserialize<XPacketAddCardToHand>(packet);
+        var card = new Card((CardType)cardPacket.CardType, (CardColor)cardPacket.CardColor);
+
+        Form.BeginInvoke(new Action(() =>
+        {
+            Form.AddCardToHand(card);
         }));
     }
 
@@ -195,102 +241,42 @@ public class XClient
         }));
     }
 
-    private void ProcessCurrentPlayer(XPacket packet)
+    private void ProcessSkipMove(XPacket packet)
     {
-        var currentPlayer = XPacketConverter.Deserialize<XPacketCurrentPlayer>(packet);
-
+        var move = XPacketConverter.Deserialize<XPacketSkipMove>(packet);
         Form.BeginInvoke(new Action(() =>
         {
-            Form.ChangeCurrentPlayer(currentPlayer.Id);
+            Form.SkipMove(move.SkipPlayerId, move.NextPlayerId);
         }));
     }
 
-    private void ProcessAddCardToHand(XPacket packet)
+    private void ProcessUno(XPacket packet)
     {
-        var cardPacket = XPacketConverter.Deserialize<XPacketAddCardToHand>(packet);
-        var card = new Card((CardType)cardPacket.CardType, (CardColor)cardPacket.CardColor);
-
+        var uno = XPacketConverter.Deserialize<XPacketUno>(packet);
         Form.BeginInvoke(new Action(() =>
         {
-            Form.AddCardToHand(card);
+            Form.Uno(uno.PlayerId);
         }));
     }
 
-    private void ProcessUpdateCardOnTable(XPacket packet)
+    private void ProcessPlayerDidntSayUno(XPacket packet)
     {
-        var cardPacket = XPacketConverter.Deserialize<XPacketUpdateCardOnTable>(packet);
-        var card = new Card((CardType)cardPacket.CardType, (CardColor)cardPacket.CardColor);
-
+        var uno = XPacketConverter.Deserialize<XPacketUno>(packet);
         Form.BeginInvoke(new Action(() =>
         {
-            Form.UpdateCardOnTable(card);
+            Form.PlayerDidntSayUno();
         }));
     }
 
-    private void ProcessGameStart(XPacket packet)
+    private void ProcessGameOver(XPacket packet)
     {
-        var gameStart = XPacketConverter.Deserialize<XPacketGameStart>(packet);
-        var lastCard = new Card((CardType)gameStart.CardOnTableType, (CardColor)gameStart.CardOnTableColor);
-        var cards = new[]
-        {
-                new Card((CardType)gameStart.Card1Type, (CardColor)gameStart.Card1Color),
-                new Card((CardType)gameStart.Card2Type, (CardColor)gameStart.Card2Color),
-                new Card((CardType)gameStart.Card3Type, (CardColor)gameStart.Card3Color),
-                new Card((CardType)gameStart.Card4Type, (CardColor)gameStart.Card4Color),
-                new Card((CardType)gameStart.Card5Type, (CardColor)gameStart.Card5Color),
-                new Card((CardType)gameStart.Card6Type, (CardColor)gameStart.Card6Color),
-                new Card((CardType)gameStart.Card7Type, (CardColor)gameStart.Card7Color),
-            };
-
-
+        var gameOver = XPacketConverter.Deserialize<XPacketGameOver>(packet);
         Form.BeginInvoke(new Action(() =>
         {
-            Form.GameStart(lastCard, cards);
+            Form.GameOver(gameOver.WinnerId);
         }));
+
     }
 
-    private void ProcessPlayerReady(XPacket packet)
-    {
-        var player = XPacketConverter.Deserialize<XPacketPlayerReady>(packet);
-        Form.BeginInvoke(new Action(() =>
-        {
-            Form.PlayerReady(player.Id);
-        }));
-    }
-
-    private void ProcessHandshake(XPacket packet)
-    {
-        var handshake = XPacketConverter.Deserialize<XPacketHandshake>(packet);
-
-        Form.BeginInvoke(new Action(() =>
-        {
-            Form.Handshake(handshake.Id, handshake.AlreadyStarted);
-        }));
-    }
-
-    private void ProcessNewPlayer(XPacket packet)
-    {
-        var newPlayer = XPacketConverter.Deserialize<XPacketNewPlayer>(packet);
-        Form.BeginInvoke(new Action(() =>
-        {
-            Form.NewPlayer(newPlayer.Id, newPlayer.Ready);
-        }));
-    }
-
-    private async void SendPackets()
-    {
-        while (true)
-        {
-            if (_packetSendingQueue.Count == 0)
-            {
-                Thread.Sleep(100);
-                continue;
-            }
-
-            var packet = _packetSendingQueue.Dequeue();
-            _socket.Send(packet);
-
-            Thread.Sleep(100);
-        }
-    }
+    #endregion
 }
